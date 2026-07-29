@@ -5,12 +5,14 @@ type PlaceholderPageProps = {
 
 export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
   return (
-    <section className="rounded-lg border border-slate-800 bg-slate-900 p-6">
-      <p className="mb-2 text-sm font-medium uppercase tracking-wide text-emerald-400">
+    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <p className="mb-2 text-sm font-medium uppercase tracking-wide text-brand-600 dark:text-brand-400">
         Placeholder
       </p>
-      <h2 className="text-2xl font-semibold text-white">{title}</h2>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+      <h2 className="text-2xl font-semibold text-slate-950 dark:text-white">
+        {title}
+      </h2>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
         {description}
       </p>
     </section>
