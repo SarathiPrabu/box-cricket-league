@@ -13,6 +13,7 @@
 
 - [ ] Supabase local setup
 - [ ] Initial database migration
+- [ ] First league admin bootstrap
 - [ ] Row Level Security baseline
 - [ ] Seed Season 1 data
 
@@ -37,6 +38,8 @@ Important:
 
 - Create `match_lineups` before `match_player_stats`.
 - `match_player_stats` should reference `match_lineups`.
+- Incomplete lineups are allowed before completion.
+- A completed match must have at least one player and exactly one captain for each team.
 - League data is private by default.
 
 ## Phase 3: League MVP Pages

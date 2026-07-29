@@ -124,6 +124,12 @@ For MVP, only `admin` may be used. `moderator` is included so future permissions
 
 This table replaces a narrow `league_admins` table.
 
+Bootstrap note:
+
+The first league admin cannot be created through normal admin-only app permissions, because no admin exists yet. For MVP, create the first authenticated user in Supabase Auth, then insert the first `league_members` row through the Supabase SQL editor, a controlled seed, or another service-role-only setup step.
+
+After the first admin exists, league membership should be managed through normal authenticated admin flows.
+
 ### players
 
 Represents a person/player globally.
@@ -269,6 +275,8 @@ Implementation note:
 
 For MVP, storing `season_id` directly on `season_rosters` is acceptable if a foreign key or trigger ensures it matches the `season_team`.
 
+The duplicate `season_id` is intentional for MVP. It allows a simple database uniqueness rule, `unique(season_id, player_id)`, so one player cannot accidentally belong to two teams in the same season. The migration must still validate that `season_rosters.season_id` matches the season from `season_rosters.season_team_id`.
+
 ### matches
 
 Represents a match within a season.
@@ -370,8 +378,9 @@ Rules:
 - A lineup row must reference a player from that team's season roster.
 - `season_team_id` must be either the home or away season team for the match.
 - `season_roster_id` must belong to the same `season_team_id` on the lineup row.
-- Each team in the match should have exactly `seasons.players_per_team` lineup rows.
-- Each team in the match must have exactly one captain.
+- Incomplete lineups are allowed while a match is being prepared.
+- A completed match must have at least one lineup player for each team.
+- A completed match must have exactly one captain for each team.
 - The captain must be one of the selected lineup players.
 - A manager can select himself as captain only if he is also in that team's `season_rosters` and selected in the lineup.
 - Match stats should only be entered for players in the match lineup.
@@ -384,7 +393,7 @@ unique(match_id, season_roster_id)
 
 Implementation note:
 
-The "lineup team is playing this match", "roster belongs to lineup team", "exactly N players", and "exactly one captain per team per match" rules are best enforced with database triggers or validation functions. The UI should also validate them before saving.
+The "lineup team is playing this match", "roster belongs to lineup team", "at least one player per team before completion", and "exactly one captain per team before completion" rules are best enforced with database triggers or validation functions. The UI should also validate them before saving.
 
 ### match_player_stats
 
@@ -418,6 +427,8 @@ Rules:
 - The match is derived through `match_lineups.match_id`.
 - The player is derived through `match_lineups.season_roster_id -> season_rosters.player_id`.
 - The team is derived through `match_lineups.season_team_id`.
+- A completed match must have exactly one player of the match.
+- Player-of-the-match corrections should be done with an atomic database helper so the app does not temporarily save two winners.
 
 ## Statistics
 
