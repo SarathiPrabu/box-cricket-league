@@ -1,0 +1,122 @@
+{
+  "generatedAt": "2026-07-29T20:57:40.300Z",
+  "harPath": "/Users/sarathiprabumohan/Downloads/boxcricketleague.vercel.app.har",
+  "archiveDir": null,
+  "sourceCounts": {
+    "auctionTeams": 7,
+    "auctionPlayers": 49,
+    "leaderboardPlayers": 61,
+    "standingsRows": 7,
+    "matchSummaries": 46
+  },
+  "mappedCounts": {
+    "leagues": 1,
+    "seasons": 1,
+    "teams": 7,
+    "players": 62,
+    "seasonTeams": 7,
+    "seasonRosters": 62,
+    "seasonTeamManagers": 7,
+    "legacySeasonPlayerStats": 62
+  },
+  "unmapped": [
+    {
+      "type": "season1_standings",
+      "reason": "current schema has teams but no standings snapshot table",
+      "count": 7
+    },
+    {
+      "type": "season1_matches",
+      "reason": "source has match summaries but no lineups or scorecard rows; raw match_player_stats cannot be created without guessing",
+      "count": 46
+    }
+  ],
+  "issues": [],
+  "verificationSamples": [
+    {
+      "playerName": "Hitesh Chordia",
+      "sourcePlayerId": "1B3zqQnbF3wlEYT5ASVQ",
+      "teamName": "Game Changers",
+      "matchesPlayed": 3,
+      "runs": 8,
+      "ballsFaced": 16,
+      "fours": 0,
+      "sixes": 0,
+      "ballsBowled": 16,
+      "runsConceded": 23,
+      "wickets": 1,
+      "catches": 0,
+      "stumpings": 0,
+      "playerOfMatchCount": 0,
+      "totalPoints": 12
+    },
+    {
+      "playerName": "Sumit Lole",
+      "sourcePlayerId": "hcKeoTNHtzXbboCKIRII",
+      "teamName": "Game Changers",
+      "matchesPlayed": 12,
+      "runs": 82,
+      "ballsFaced": 77,
+      "fours": 6,
+      "sixes": 0,
+      "ballsBowled": 72,
+      "runsConceded": 74,
+      "wickets": 6,
+      "catches": 2,
+      "stumpings": 0,
+      "playerOfMatchCount": 2,
+      "totalPoints": 186
+    },
+    {
+      "playerName": "Sushant Gawali",
+      "sourcePlayerId": "l709fTPrMaDGQ8Lhv1tG",
+      "teamName": "Jersey Indians",
+      "matchesPlayed": 14,
+      "runs": 94,
+      "ballsFaced": 80,
+      "fours": 5,
+      "sixes": 1,
+      "ballsBowled": 84,
+      "runsConceded": 86,
+      "wickets": 11,
+      "catches": 1,
+      "stumpings": 0,
+      "playerOfMatchCount": 1,
+      "totalPoints": 251
+    },
+    {
+      "playerName": "Guru Nayak",
+      "sourcePlayerId": "gjsyix9oD5MXgf6e6He2",
+      "teamName": "Power Strikers",
+      "matchesPlayed": 11,
+      "runs": 72,
+      "ballsFaced": 73,
+      "fours": 3,
+      "sixes": 0,
+      "ballsBowled": 66,
+      "runsConceded": 102,
+      "wickets": 4,
+      "catches": 1,
+      "stumpings": 0,
+      "playerOfMatchCount": 0,
+      "totalPoints": 132
+    },
+    {
+      "playerName": "Abhijeet Shete",
+      "sourcePlayerId": "sCsJJw1wA9oa73TvTHN9",
+      "teamName": "Shadow Strikers",
+      "matchesPlayed": 4,
+      "runs": 41,
+      "ballsFaced": 33,
+      "fours": 2,
+      "sixes": 2,
+      "ballsBowled": 24,
+      "runsConceded": 28,
+      "wickets": 3,
+      "catches": 2,
+      "stumpings": 0,
+      "playerOfMatchCount": 0,
+      "totalPoints": 100
+    }
+  ]
+}
