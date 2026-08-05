@@ -167,6 +167,16 @@ Never commit:
 
 Use environment variables and maintain `.env.example`.
 
+## Token Efficiency
+
+When working with Codex:
+
+* Restate the concrete goal in one sentence before coding.
+* Prefer the smallest useful change.
+* Keep updates to the delta only.
+* Avoid repeating stable repo docs unless they changed or are directly relevant.
+* Let the user run routine local checks when Codex does not need the result to continue.
+
 ## UI
 
 Design primarily for mobile because league participants are likely to access the site from phones.

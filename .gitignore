@@ -36,3 +36,4 @@ supabase/.temp/
 *.p12
 *.pfx
 *.crt
+*client_secret_*.json

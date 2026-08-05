@@ -117,10 +117,12 @@ Allowed roles:
 
 ```text
 admin
-moderator
+scorer
+player
+team_manager
 ```
 
-For MVP, only `admin` may be used. `moderator` is included so future permissions do not require replacing the table.
+For MVP, `admin` manages league setup and permissions, `scorer` manages match scoring data, `team_manager` can manage their assigned team lineups, and `player` is the authenticated player-facing role.
 
 This table replaces a narrow `league_admins` table.
 
@@ -457,7 +459,9 @@ Access should be based on `league_members`:
 
 ```text
 admin -> manage league data
-moderator -> future limited management
+scorer -> manage match scoring data
+team_manager -> manage assigned team lineups
+player -> authenticated player-facing access
 ```
 
 Public league pages can be added later as a separate feature.
