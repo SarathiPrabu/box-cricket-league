@@ -4,10 +4,12 @@ import { ThemeToggle } from '../components/theme/ThemeToggle';
 import { useTheme } from '../components/theme/useTheme';
 import { GoogleSignInButton } from '../features/auth/GoogleSignInButton';
 import { useAuth } from '../features/auth/authState';
+import { canAccessRoute, type ProtectedRouteName } from './routeAccess';
 
 const navItems = [
   { to: '/', label: 'Home' },
-  { to: "/players", label: "Players" },
+  { to: '/admin/roles', label: 'Roles', access: 'adminRoles' as const },
+  { to: '/players', label: 'Players' },
   { to: '/teams', label: 'Teams' },
   { to: '/matches', label: 'Matches' },
   { to: '/standings', label: 'Standings' },
@@ -25,6 +27,9 @@ export function AppLayout() {
   const { theme, toggleTheme } = useTheme();
   const { user, isSignedIn, isLoading, authError, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const visibleNavItems = navItems.filter(
+    (item) => !item.access || canAccessRoute(user, item.access as ProtectedRouteName),
+  );
   const appThemeClass =
     theme === 'dark'
       ? 'dark min-h-screen bg-slate-950 text-slate-100'
@@ -64,7 +69,7 @@ export function AppLayout() {
               </div>
               {authError ? <p className="mt-3 text-sm text-red-600 dark:text-red-400">{authError}</p> : null}
               <nav id="mobile-navigation" className="mt-3 grid gap-2" aria-label="Mobile navigation">
-                {navItems.map((item) => (
+                {visibleNavItems.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
@@ -87,9 +92,9 @@ export function AppLayout() {
             <p className="text-sm font-medium uppercase tracking-wide text-brand-600 dark:text-brand-400">
               Box Cricket League
             </p>
-            <h1 className="text-xl font-semibold text-slate-950 dark:text-white">
-              MVP Foundation
-            </h1>
+            {/*<h1 className="text-xl font-semibold text-slate-950 dark:text-white">*/}
+            {/*  MVP Foundation*/}
+            {/*</h1>*/}
           </div>
           <div className="flex flex-col gap-3 sm:items-end">
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
@@ -130,7 +135,7 @@ export function AppLayout() {
               </p>
             ) : null}
             <nav className="flex flex-wrap justify-end gap-2" aria-label="Main navigation">
-              {navItems.map((item) => (
+              {visibleNavItems.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
