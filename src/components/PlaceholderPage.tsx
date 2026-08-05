@@ -5,7 +5,7 @@ type PlaceholderPageProps = {
 
 export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <section className="surface-card p-6">
       <p className="mb-2 text-sm font-medium uppercase tracking-wide text-brand-600 dark:text-brand-400">
         Placeholder
       </p>
