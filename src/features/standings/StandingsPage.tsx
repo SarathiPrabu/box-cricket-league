@@ -69,7 +69,7 @@ function StandingsRow({
       <td className="px-4 py-3 sm:px-6">
         <Link
           aria-label={`Open ${row.team_name} roster for ${selectedSeason.season_name}`}
-          className="flex min-w-52 items-center gap-3 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+          className="flex items-center gap-3 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
           to={teamUrl}
         >
           <TeamBadge teamName={row.team_name} />
@@ -101,8 +101,8 @@ function StandingsTable({
 }) {
   return (
     <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[820px] border-collapse text-left">
+      <div>
+        <table className="w-full table-fixed border-collapse text-left">
           <thead className="bg-slate-50 dark:bg-slate-950/60">
             <tr>
               <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600 sm:px-6 dark:text-slate-300" scope="col">
@@ -154,6 +154,34 @@ function StandingsTable({
         </table>
       </div>
     </div>
+  );
+}
+
+function StandingsCards({ standings, selectedSeason, loading = false }: { standings?: StandingRow[]; selectedSeason?: Season; loading?: boolean }) {
+  if (loading) return <div className="mt-6 grid gap-3 md:hidden">{Array.from({ length: 4 }).map((_, index) => <div className="h-32 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none dark:bg-slate-800" key={index} />)}</div>;
+  if (!standings || !selectedSeason) return null;
+
+  return (
+    <ol className="mt-6 grid gap-3 md:hidden">
+      {standings.map((row, index) => {
+        const teamUrl = `/teams/${row.team_slug}?season=${encodeURIComponent(seasonSlug(selectedSeason.season_name))}`;
+        return (
+          <li className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" key={row.season_team_id}>
+            <Link className="flex items-center gap-3 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50" to={teamUrl}>
+              <span className="text-sm font-bold text-slate-500 dark:text-slate-400">{index + 1}</span>
+              <TeamBadge teamName={row.team_name} />
+              <span className="min-w-0 flex-1 break-words font-semibold text-slate-950 dark:text-white">{row.team_name}</span>
+            </Link>
+            <dl className="mt-4 grid grid-cols-4 gap-2 text-center text-sm">
+              <div><dt className="text-xs uppercase text-slate-500 dark:text-slate-400">M</dt><dd className="mt-1 font-semibold">{row.matches_played}</dd></div>
+              <div><dt className="text-xs uppercase text-slate-500 dark:text-slate-400">W</dt><dd className="mt-1 font-semibold">{row.wins}</dd></div>
+              <div><dt className="text-xs uppercase text-slate-500 dark:text-slate-400">Pts</dt><dd className="mt-1 font-semibold">{row.points}</dd></div>
+              <div><dt className="text-xs uppercase text-slate-500 dark:text-slate-400">NRR</dt><dd className="mt-1 font-semibold">{formatNrr(row.net_run_rate)}</dd></div>
+            </dl>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -245,7 +273,7 @@ export function StandingsPage() {
   if (seasonsState.status === 'loading') {
     return (
       <section>
-        <h2 className="text-3xl font-semibold text-slate-950 dark:text-white">Standings</h2>
+        <h2 className="text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">Standings</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Loading league seasons.</p>
         <StandingsTable loading />
       </section>
@@ -264,7 +292,7 @@ export function StandingsPage() {
   if (!selectedSeason) {
     return (
       <section>
-        <h2 className="text-3xl font-semibold text-slate-950 dark:text-white">Standings</h2>
+        <h2 className="text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">Standings</h2>
         <p className="mt-6 rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
           No seasons are available for this league.
         </p>
@@ -278,7 +306,7 @@ export function StandingsPage() {
     <section>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-3xl font-semibold text-slate-950 dark:text-white">Standings</h2>
+          <h2 className="text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">Standings</h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             View season standings for {leagueName}. Points use a standard 2 for a win, 1 for a tie/no result, 0 for a loss
             system. NRR breaks tied points.
@@ -292,7 +320,7 @@ export function StandingsPage() {
         />
       </div>
 
-      {standingsState.status === 'loading' || standingsState.status === 'idle' ? <StandingsTable loading /> : null}
+      {standingsState.status === 'loading' || standingsState.status === 'idle' ? <><StandingsCards loading /><div className="hidden md:block"><StandingsTable loading /></div></> : null}
 
       {standingsState.status === 'error' ? (
         <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -307,7 +335,7 @@ export function StandingsPage() {
       ) : null}
 
       {standingsState.status === 'ready' && standingsState.standings.length > 0 ? (
-        <StandingsTable selectedSeason={selectedSeason} standings={standingsState.standings} />
+        <><StandingsCards selectedSeason={selectedSeason} standings={standingsState.standings} /><div className="hidden md:block"><StandingsTable selectedSeason={selectedSeason} standings={standingsState.standings} /></div></>
       ) : null}
     </section>
   );

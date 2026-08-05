@@ -57,7 +57,7 @@ function TeamRow({
         <td className="px-4 py-3 sm:px-6">
           <Link
               aria-label={`Open ${team.team_name} details for ${selectedSeason.season_name}`}
-              className="flex min-w-52 items-center gap-3 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
+              className="flex items-center gap-3 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50"
               to={teamUrl}
           >
             <TeamBadge teamName={team.team_name} />
@@ -117,8 +117,8 @@ function TeamsTable({
 }) {
   return (
       <div className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-left">
+        <div>
+          <table className="w-full table-fixed border-collapse text-left">
             <thead className="bg-slate-50 dark:bg-slate-950/60">
             <tr>
               <th
@@ -159,6 +159,34 @@ function TeamsTable({
           </table>
         </div>
       </div>
+  );
+}
+
+function TeamsCards({ teams, selectedSeason, loading = false }: { teams?: Team[]; selectedSeason?: Season; loading?: boolean }) {
+  if (loading) {
+    return <div className="mt-6 grid gap-3 md:hidden">{Array.from({ length: 4 }).map((_, index) => <div className="h-24 animate-pulse rounded-lg bg-slate-200 motion-reduce:animate-none dark:bg-slate-800" key={index} />)}</div>;
+  }
+
+  if (!teams || !selectedSeason) return null;
+
+  return (
+    <ul className="mt-6 grid gap-3 md:hidden">
+      {teams.map((team) => {
+        const teamUrl = `/teams/${team.team_slug}?season=${encodeURIComponent(seasonSlug(selectedSeason.season_name))}`;
+        return (
+          <li key={team.season_team_id}>
+            <Link className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 dark:border-slate-800 dark:bg-slate-900" to={teamUrl}>
+              <TeamBadge teamName={team.team_name} />
+              <span className="min-w-0 flex-1">
+                <span className="block break-words font-semibold text-slate-950 dark:text-white">{team.team_name}</span>
+                <span className="mt-1 block text-sm text-slate-600 dark:text-slate-300">{team.manager_name?.trim() || 'Manager not assigned'}</span>
+              </span>
+              <span className="text-sm font-semibold text-brand-700 dark:text-brand-400" aria-hidden="true">→</span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -243,13 +271,14 @@ export function TeamsPage() {
   if (seasonsState.status === "loading") {
     return (
         <section>
-          <h2 className="text-3xl font-semibold text-slate-950 dark:text-white">
+          <h2 className="text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">
             Teams
           </h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             Loading league seasons.
           </p>
-          <TeamsTable loading />
+          <TeamsCards loading />
+          <div className="hidden md:block"><TeamsTable loading /></div>
         </section>
     );
   }
@@ -277,7 +306,7 @@ export function TeamsPage() {
   if (!selectedSeason) {
     return (
         <section>
-          <h2 className="text-3xl font-semibold text-slate-950 dark:text-white">
+          <h2 className="text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">
             Teams
           </h2>
           <p className="mt-6 rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
@@ -294,7 +323,7 @@ export function TeamsPage() {
       <section>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-3xl font-semibold text-slate-950 dark:text-white">
+            <h2 className="text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">
               Teams
             </h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
@@ -312,7 +341,10 @@ export function TeamsPage() {
         </div>
 
         {teamsState.status === "loading" || teamsState.status === "idle" ? (
-            <TeamsTable loading />
+          <>
+            <TeamsCards loading />
+            <div className="hidden md:block"><TeamsTable loading /></div>
+          </>
         ) : null}
 
         {teamsState.status === "error" ? (
@@ -337,7 +369,10 @@ export function TeamsPage() {
         ) : null}
 
         {teamsState.status === "ready" && teamsState.teams.length > 0 ? (
-            <TeamsTable selectedSeason={selectedSeason} teams={teamsState.teams} />
+          <>
+            <TeamsCards selectedSeason={selectedSeason} teams={teamsState.teams} />
+            <div className="hidden md:block"><TeamsTable selectedSeason={selectedSeason} teams={teamsState.teams} /></div>
+          </>
         ) : null}
       </section>
   );

@@ -53,7 +53,7 @@ export function PlayersPage() {
 
   return (
     <section>
-      <h2 className="text-3xl font-semibold text-slate-950 dark:text-white">Players</h2>
+      <h2 className="text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">Players</h2>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Browse player profiles and career statistics.</p>
 
       {playersState.players.length === 0 ? (

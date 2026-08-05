@@ -66,6 +66,24 @@ function StatGroup({ title, stats }: { title: string; stats: Array<[string, stri
   );
 }
 
+function SeasonHistoryCards({ seasons }: { seasons: SeasonStats[] }) {
+  return (
+    <ul className="divide-y divide-slate-200 dark:divide-slate-800 md:hidden">
+      {seasons.map((season) => (
+        <li className="p-4" key={season.season_id}>
+          <p className="font-semibold text-slate-950 dark:text-white">{season.season_name}</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{season.team_name}</p>
+          <dl className="mt-4 grid grid-cols-3 gap-3 text-center text-sm">
+            <div><dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Matches</dt><dd className="mt-1 font-semibold">{season.matches_played}</dd></div>
+            <div><dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Runs</dt><dd className="mt-1 font-semibold">{season.runs}</dd></div>
+            <div><dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Wickets</dt><dd className="mt-1 font-semibold">{season.wickets}</dd></div>
+          </dl>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function PlayerDetailPage() {
   const { slug } = useParams();
   const [profile, setProfile] = useState<ProfileState>({ status: 'loading' });
@@ -165,15 +183,15 @@ export function PlayerDetailPage() {
         <Link className="text-sm font-medium text-brand-600 dark:text-brand-400" to="/players">
           ← Players
         </Link>
-        <h2 className="mt-3 text-3xl font-semibold text-slate-950 dark:text-white">{profile.player.display_name}</h2>
+        <h2 className="mt-3 break-words text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">{profile.player.display_name}</h2>
         {profile.player.full_name && profile.player.full_name !== profile.player.display_name ? (
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{profile.player.full_name}</p>
         ) : null}
       </header>
 
-      <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Statistic season selector">
+      <div className="flex flex-wrap gap-2" aria-label="Statistic season selector">
         <button
-          className={`rounded-md px-4 py-2 text-sm font-medium ${selectedSeasonId === 'career' ? 'bg-brand-500 text-slate-950' : 'bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}
+          className={`min-h-11 rounded-md px-4 py-2 text-sm font-medium ${selectedSeasonId === 'career' ? 'bg-brand-500 text-slate-950' : 'bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}
           onClick={() => setSelectedSeasonId('career')}
           type="button"
         >
@@ -182,7 +200,7 @@ export function PlayerDetailPage() {
         {profile.seasons.map((season) => (
           <button
             key={season.season_id}
-            className={`whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium ${selectedSeasonId === season.season_id ? 'bg-brand-500 text-slate-950' : 'bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}
+            className={`min-h-11 rounded-md px-4 py-2 text-sm font-medium ${selectedSeasonId === season.season_id ? 'bg-brand-500 text-slate-950' : 'bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}
             onClick={() => setSelectedSeasonId(season.season_id)}
             type="button"
           >
@@ -213,8 +231,10 @@ export function PlayerDetailPage() {
         {profile.seasons.length === 0 ? (
           <p className="border-t border-slate-200 px-5 py-4 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-300">No season records yet.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-left text-sm">
+          <>
+          <SeasonHistoryCards seasons={profile.seasons} />
+          <div className="hidden md:block">
+            <table className="w-full text-left text-sm">
               <thead className="border-y border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
                 <tr><th className="px-5 py-3">Season</th><th className="px-5 py-3">Team</th><th className="px-5 py-3">Matches</th><th className="px-5 py-3">Runs</th><th className="px-5 py-3">Wickets</th></tr>
               </thead>
@@ -227,6 +247,7 @@ export function PlayerDetailPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </section>
     </div>

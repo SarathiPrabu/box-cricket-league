@@ -182,14 +182,14 @@ export function TeamDetailPage() {
                 {initials(team.team_name)}
               </div>
               <div>
-                <h2 className="text-3xl font-semibold text-slate-950 dark:text-white">{team.team_name}</h2>
+                <h2 className="break-words text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">{team.team_name}</h2>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                   {team.league_name} - {team.season_name}
                 </p>
               </div>
             </div>
 
-            <dl className="grid grid-cols-2 gap-4 rounded-md bg-slate-50 p-4 text-sm dark:bg-slate-950">
+            <dl className="grid w-full grid-cols-1 gap-4 rounded-md bg-slate-50 p-4 text-sm sm:w-auto sm:grid-cols-2 dark:bg-slate-950">
               <div>
                 <dt className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Roster</dt>
                 <dd className="mt-1 font-semibold text-slate-950 dark:text-white">
@@ -205,7 +205,7 @@ export function TeamDetailPage() {
         </header>
 
         <section>
-          <div className="flex items-end justify-between gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h3 className="text-xl font-semibold text-slate-950 dark:text-white">Team roster</h3>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
