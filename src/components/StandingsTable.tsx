@@ -133,16 +133,6 @@ const COLUMNS: ColumnDefinition[] = [
     skeleton: () => <SkeletonBlock className="mx-auto h-4 w-10" />,
   })),
   {
-    key: 'draws',
-    header: 'T/NR',
-    widthClass: 'w-10 sm:w-auto',
-    align: 'center' as const,
-    headerPaddingClass: 'px-1 sm:px-4',
-    bodyClass: `${TEXT_BODY} tabular-nums px-1 sm:px-4`,
-    cell: (row: StandingsRowData) => row.draws,
-    skeleton: () => <SkeletonBlock className="mx-auto h-4 w-10" />,
-  },
-  {
     key: 'points',
     header: 'Pts',
     widthClass: 'w-9 sm:w-auto',
