@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { BackButton } from '../../components/BackButton';
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
 
 const activeLeagueSlug = 'box-cricket-league';
@@ -67,7 +68,6 @@ export function TeamDetailPage() {
   const [teamState, setTeamState] = useState<TeamState>({ status: 'loading' });
 
   const requestedSeasonSlug = searchParams.get('season');
-  const teamsUrl = requestedSeasonSlug ? `/teams?season=${encodeURIComponent(requestedSeasonSlug)}` : '/teams';
 
   useEffect(() => {
     let cancelled = false;
@@ -123,9 +123,7 @@ export function TeamDetailPage() {
   if (teamState.status === 'loading') {
     return (
         <div className="space-y-6">
-          <Link className="text-sm font-medium text-brand-600 dark:text-brand-400" to={teamsUrl}>
-            Back to teams
-          </Link>
+          <BackButton />
           <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="h-7 w-48 animate-pulse rounded bg-slate-200 motion-reduce:animate-none dark:bg-slate-800" />
             <div className="mt-3 h-4 w-64 animate-pulse rounded bg-slate-200 motion-reduce:animate-none dark:bg-slate-800" />
@@ -142,9 +140,7 @@ export function TeamDetailPage() {
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             This team is not registered for the selected season.
           </p>
-          <Link className="mt-4 inline-block text-sm font-medium text-brand-600 dark:text-brand-400" to={teamsUrl}>
-            Back to teams
-          </Link>
+          <BackButton className="mt-4 inline-block" />
         </section>
     );
   }
@@ -156,9 +152,7 @@ export function TeamDetailPage() {
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
             Please try again in a moment.
           </p>
-          <Link className="mt-4 inline-block text-sm font-medium text-brand-600 dark:text-brand-400" to={teamsUrl}>
-            Back to teams
-          </Link>
+          <BackButton className="mt-4 inline-block" />
         </section>
     );
   }
@@ -168,9 +162,7 @@ export function TeamDetailPage() {
 
   return (
       <div className="space-y-6">
-        <Link className="text-sm font-medium text-brand-600 dark:text-brand-400" to={teamsUrl}>
-          Back to teams
-        </Link>
+        <BackButton />
 
         <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

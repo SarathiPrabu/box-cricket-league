@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { BackButton } from '../../components/BackButton';
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
 
 type Player = {
@@ -166,9 +167,7 @@ export function PlayerDetailPage() {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <h2 className="text-2xl font-semibold text-slate-950 dark:text-white">Player not found</h2>
-        <Link className="mt-3 inline-block text-sm font-medium text-brand-600 dark:text-brand-400" to="/players">
-          Back to players
-        </Link>
+        <BackButton className="mt-3 inline-block" />
       </section>
     );
   }
@@ -180,9 +179,7 @@ export function PlayerDetailPage() {
   return (
     <div className="space-y-6">
       <header>
-        <Link className="text-sm font-medium text-brand-600 dark:text-brand-400" to="/players">
-          ← Players
-        </Link>
+        <BackButton />
         <h2 className="mt-3 break-words text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">{profile.player.display_name}</h2>
         {profile.player.full_name && profile.player.full_name !== profile.player.display_name ? (
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{profile.player.full_name}</p>
