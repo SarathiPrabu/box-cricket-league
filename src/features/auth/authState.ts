@@ -16,6 +16,7 @@ export type AuthUser = {
   picture?: string;
   subject?: string;
   roles: LeagueRole[];
+  activeRole: LeagueRoleName | null;
 };
 
 export type AuthContextValue = {
@@ -24,6 +25,7 @@ export type AuthContextValue = {
   isLoading: boolean;
   authError: string | null;
   signOut: () => void;
+  setActiveRole: (role: LeagueRoleName | null) => void;
   handleGoogleCredential: (credential: string) => Promise<void>;
 };
 
@@ -66,7 +68,19 @@ export function getStoredUser() {
       return null;
     }
 
-    return parsedValue as AuthUser;
+    const validRoles = parsedValue.roles.filter(
+      (role): role is LeagueRole =>
+        typeof role === 'object' &&
+        role !== null &&
+        typeof role.role === 'string',
+    );
+    const activeRole =
+      typeof parsedValue.activeRole === 'string' &&
+      validRoles.some((role) => role.role === parsedValue.activeRole)
+        ? parsedValue.activeRole
+        : validRoles[0]?.role ?? null;
+
+    return { ...parsedValue, roles: validRoles, activeRole } as AuthUser;
   } catch {
     window.localStorage.removeItem(AUTH_STORAGE_KEY);
     return null;

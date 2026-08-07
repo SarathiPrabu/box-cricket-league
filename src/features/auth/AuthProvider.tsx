@@ -84,7 +84,20 @@ async function buildAuthUser(user: User) {
     picture: getUserPicture(user),
     subject: user.id,
     roles,
+    activeRole: roles[0]?.role ?? null,
   } satisfies AuthUser;
+}
+
+function withPreservedActiveRole(nextUser: AuthUser, previousUser: AuthUser | null) {
+  const activeRole = previousUser?.activeRole;
+
+  return {
+    ...nextUser,
+    activeRole:
+      activeRole && nextUser.roles.some((role) => role.role === activeRole)
+        ? activeRole
+        : nextUser.roles[0]?.role ?? null,
+  };
 }
 
 function getAuthErrorMessage(error: unknown) {
@@ -149,7 +162,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        setUser(await buildAuthUser(data.session.user));
+        const nextUser = await buildAuthUser(data.session.user);
+        setUser((previousUser) => withPreservedActiveRole(nextUser, previousUser));
         setAuthError(null);
       } catch (roleError) {
         setAuthError(
@@ -173,7 +187,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         void buildAuthUser(session.user)
           .then((nextUser) => {
-            setUser(nextUser);
+            setUser((previousUser) =>
+              withPreservedActiveRole(nextUser, previousUser),
+            );
             setAuthError(null);
           })
           .catch((roleError: unknown) => {
@@ -215,7 +231,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
-        setUser(await buildAuthUser(data.user));
+        const nextUser = await buildAuthUser(data.user);
+        setUser((previousUser) => withPreservedActiveRole(nextUser, previousUser));
       }
     } catch (error) {
       setAuthError(getAuthErrorMessage(error));
@@ -232,6 +249,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const setActiveRole = (role: LeagueRoleName | null) => {
+    setUser((previousUser) => {
+      if (!previousUser) return previousUser;
+
+      const nextRole =
+        role === null || previousUser.roles.some((assignedRole) => assignedRole.role === role)
+          ? role
+          : previousUser.activeRole;
+
+      return { ...previousUser, activeRole: nextRole };
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -240,6 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         authError,
         signOut,
+        setActiveRole,
         handleGoogleCredential,
       }}
     >

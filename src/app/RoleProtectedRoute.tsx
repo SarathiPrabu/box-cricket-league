@@ -27,7 +27,7 @@ export function RoleProtectedRoute({
 
   if (
     !user ||
-    !hasRoleForLeague(user.roles, requiredRoles, leagueSlug)
+    !hasRoleForLeague(user.roles, requiredRoles, leagueSlug, user.activeRole)
   ) {
     return (
       <PlaceholderPage

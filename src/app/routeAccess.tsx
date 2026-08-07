@@ -38,6 +38,11 @@ export function canAccessRoute(
 
   return Boolean(
     user &&
-      hasRoleForLeague(user.roles, access.requiredRoles, access.leagueSlug),
+      hasRoleForLeague(
+        user.roles,
+        access.requiredRoles,
+        access.leagueSlug,
+        user.activeRole,
+      ),
   );
 }

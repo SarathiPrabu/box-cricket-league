@@ -19,10 +19,14 @@ type RoleAssignment = {
   role: LeagueRoleName | null;
 };
 
+type UserRoleAssignment = Omit<RoleAssignment, 'role'> & {
+  roles: LeagueRoleName[];
+};
+
 type RoleAssignmentState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; users: RoleAssignment[] };
+  | { status: 'ready'; users: UserRoleAssignment[] };
 
 export function RoleAssignmentPage() {
   const [state, setState] = useState<RoleAssignmentState>({
@@ -49,30 +53,50 @@ export function RoleAssignmentPage() {
       return;
     }
 
-    setState({
-      status: 'ready',
-      users: ((data ?? []) as RoleAssignment[]).map((assignment) => ({
-        ...assignment,
-        role: assignment.role ?? null,
-      })),
-    });
+    const users = new Map<string, UserRoleAssignment>();
+
+    for (const assignment of (data ?? []) as RoleAssignment[]) {
+      if (!assignment.role) {
+        users.set(assignment.user_id, {
+          user_id: assignment.user_id,
+          email: assignment.email,
+          display_name: assignment.display_name,
+          roles: [],
+        });
+        continue;
+      }
+
+      const existing = users.get(assignment.user_id);
+      if (existing) {
+        existing.roles.push(assignment.role);
+      } else {
+        users.set(assignment.user_id, {
+          user_id: assignment.user_id,
+          email: assignment.email,
+          display_name: assignment.display_name,
+          roles: [assignment.role],
+        });
+      }
+    }
+
+    setState({ status: 'ready', users: [...users.values()] });
   }
 
   useEffect(() => {
     void loadAssignments();
   }, []);
 
-  async function saveRole(userId: string, role: LeagueRoleName | '') {
+  async function saveRoles(userId: string, roles: LeagueRoleName[]) {
     if (!supabase || !isSupabaseConfigured || state.status !== 'ready') {
       return;
     }
 
     setSavingUserId(userId);
 
-    const { error } = await supabase.rpc('set_league_member_role', {
+    const { error } = await supabase.rpc('set_league_member_roles', {
       target_league_slug: leagueSlug,
       target_user_id: userId,
-      target_role: role || null,
+      target_roles: roles,
     });
 
     if (error) {
@@ -85,7 +109,7 @@ export function RoleAssignmentPage() {
       status: 'ready',
       users: state.users.map((assignment) =>
         assignment.user_id === userId
-          ? { ...assignment, role: role || null }
+          ? { ...assignment, roles }
           : assignment,
       ),
     });
@@ -182,26 +206,31 @@ export function RoleAssignmentPage() {
                     </p>
                   ) : null}
                 </div>
-                <label className="flex flex-col gap-1 text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Role
-                  <select
-                    value={assignment.role ?? ''}
-                    disabled={savingUserId === assignment.user_id}
-                    onChange={(event) => {
-                      void saveRole(
-                        assignment.user_id,
-                        event.target.value as LeagueRoleName | '',
+                <div className="flex flex-col gap-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+                  <span>Roles</span>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {roleOptions.filter((role) => role.value).map((role) => {
+                      const roleValue = role.value as LeagueRoleName;
+                      return (
+                        <label key={roleValue} className="flex items-center gap-2 whitespace-nowrap text-sm font-normal">
+                          <input
+                            type="checkbox"
+                            checked={assignment.roles.includes(roleValue)}
+                            disabled={savingUserId === assignment.user_id}
+                            onChange={(event) => {
+                              const nextRoles = event.target.checked
+                                ? [...assignment.roles, roleValue]
+                                : assignment.roles.filter((assignedRole) => assignedRole !== roleValue);
+                              void saveRoles(assignment.user_id, nextRoles);
+                            }}
+                            className="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500 dark:border-slate-700"
+                          />
+                          {role.label}
+                        </label>
                       );
-                    }}
-                    className="min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 sm:w-44 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                  >
-                    {roleOptions.map((role) => (
-                      <option key={role.value || 'none'} value={role.value}>
-                        {role.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    })}
+                  </div>
+                </div>
               </li>
             ))}
           </ul>

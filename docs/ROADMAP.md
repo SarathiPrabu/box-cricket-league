@@ -45,11 +45,11 @@ Important:
 ## Phase 3: League MVP Pages
 
 - [ ] League home page
-- [ ] Season selector
-- [ ] Teams list
-- [ ] Team detail with season roster
-- [ ] Players list
-- [ ] Player profile
+- [x] Season selector
+- [x] Teams list
+- [x] Team detail with season roster
+- [x] Players list
+- [x] Player profile
 
 ## Phase 4: Matches
 
@@ -70,8 +70,8 @@ Important:
 
 ## Phase 6: Admin MVP
 
-- [ ] Admin authentication
-- [ ] League admin authorization
+- [x] Admin authentication
+- [x] League admin authorization
 - [ ] Team and player management
 - [ ] Season roster management
 - [ ] Match setup

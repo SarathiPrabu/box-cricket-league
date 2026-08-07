@@ -1,10 +1,10 @@
-import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import logo from '../assets/logo.png';
+import { MobileMenu } from '../components/MobileMenu';
 import { ThemeToggle } from '../components/theme/ThemeToggle';
 import { useTheme } from '../components/theme/useTheme';
 import { GoogleSignInButton } from '../features/auth/GoogleSignInButton';
-import { useAuth } from '../features/auth/authState';
+import { useAuth, type AuthUser, type LeagueRoleName } from '../features/auth/authState';
 import { canAccessRoute, type ProtectedRouteName } from './routeAccess';
 
 const navItems = [
@@ -24,10 +24,46 @@ const roleLabels = {
   team_manager: 'Team Manager',
 };
 
+function RoleSelector({
+  user,
+  onChange,
+}: {
+  user: AuthUser;
+  onChange: (role: LeagueRoleName | null) => void;
+}) {
+  if (user.roles.length < 2) {
+    return user.activeRole ? (
+      <span className="block truncate text-xs font-medium text-slate-500 dark:text-slate-400">
+        {roleLabels[user.activeRole]}
+      </span>
+    ) : null;
+  }
+
+  return (
+    <label className="flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+      <span className="sr-only">View as role</span>
+      <select
+        aria-label="View as role"
+        value={user.activeRole ?? ''}
+        onChange={(event) => {
+          onChange((event.target.value || null) as LeagueRoleName | null);
+        }}
+        className="max-w-32 rounded border border-slate-300 bg-white px-1.5 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+      >
+        <option value="">User</option>
+        {user.roles.map((role) => (
+          <option key={`${role.leagueId}-${role.role}`} value={role.role}>
+            {roleLabels[role.role]}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 export function AppLayout() {
   const { theme, toggleTheme } = useTheme();
-  const { user, isSignedIn, isLoading, authError, signOut } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, isSignedIn, isLoading, authError, signOut, setActiveRole } = useAuth();
   const visibleNavItems = navItems.filter(
     (item) => !item.access || canAccessRoute(user, item.access as ProtectedRouteName),
   );
@@ -39,7 +75,7 @@ export function AppLayout() {
   return (
     <div className={appThemeClass}>
       <header className="relative border-b border-slate-200 bg-white/95 dark:border-slate-800 dark:bg-slate-950/95">
-        <div className="mx-auto max-w-6xl px-4 md:hidden">
+        <div className="mx-auto max-w-6xl px-4 lg:hidden">
           <div className="flex min-h-16 items-center justify-between gap-3">
             <NavLink to="/" className="flex min-w-0 items-center gap-2.5" aria-label="Box Cricket League home">
               <img src={logo} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
@@ -47,53 +83,24 @@ export function AppLayout() {
                 Box Cricket League
               </span>
             </NavLink>
-            <div className="flex items-center gap-2">
-              <button
-                aria-controls="mobile-navigation"
-                aria-expanded={isMobileMenuOpen}
-                aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white p-2 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                onClick={() => setIsMobileMenuOpen((open) => !open)}
-                type="button"
-              >
-                <span aria-hidden="true" className="text-xl leading-none">{isMobileMenuOpen ? '×' : '☰'}</span>
-              </button>
-            </div>
-          </div>
-          {isMobileMenuOpen ? (
-            <div className="py-2 pb-3">
-              <nav id="mobile-navigation" className="grid gap-2" aria-label="Mobile navigation">
-                {visibleNavItems.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.to === '/'}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={({ isActive }) => [
-                      'flex min-h-10 items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold transition',
-                      isActive ? 'bg-brand-500 text-slate-950' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white',
-                    ].join(' ')}
-                  >
-                    {item.label}
-                  </NavLink>
-                ))}
-              </nav>
-              <div className="mt-2 flex flex-wrap items-center gap-2 pt-2">
+            <MobileMenu items={visibleNavItems}>
+              <div className="flex flex-wrap items-center gap-2">
                 <ThemeToggle theme={theme} onToggle={toggleTheme} />
                 {isLoading ? (
-                  <span className="min-h-10 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600 dark:bg-slate-900 dark:text-slate-300">Checking login...</span>
+                  <span className="min-h-11 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600 dark:bg-slate-900 dark:text-slate-300">Checking login...</span>
                 ) : isSignedIn ? (
                   <>
                     <span className="max-w-full truncate rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-emerald-300 dark:bg-slate-800 dark:text-emerald-200">Hi {user?.name}</span>
-                    <button type="button" onClick={signOut} className="min-h-10 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">Sign out</button>
+                    {user ? <RoleSelector user={user} onChange={setActiveRole} /> : null}
+                    <button type="button" onClick={signOut} className="min-h-11 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">Sign out</button>
                   </>
                 ) : <GoogleSignInButton />}
               </div>
               {authError ? <p className="mt-3 text-sm text-red-600 dark:text-red-400">{authError}</p> : null}
-            </div>
-          ) : null}
+            </MobileMenu>
+          </div>
         </div>
-        <div className="mx-auto hidden min-h-16 max-w-6xl items-center gap-5 px-4 md:flex">
+        <div className="mx-auto hidden min-h-16 max-w-6xl items-center gap-5 px-4 lg:flex">
           <NavLink to="/" className="flex shrink-0 items-center gap-2.5" aria-label="Box Cricket League home">
             <img src={logo} alt="" className="h-10 w-10 rounded-full object-cover" />
             <span className="text-sm font-bold uppercase tracking-wide text-brand-600 dark:text-brand-400">Box Cricket League</span>
@@ -123,11 +130,7 @@ export function AppLayout() {
               <>
                 <div className="min-w-0 max-w-36">
                   <span className="block truncate text-sm font-semibold text-slate-700 dark:text-slate-200">{user?.name}</span>
-                  {user?.roles.length ? (
-                    <span className="block truncate text-xs font-medium text-slate-500 dark:text-slate-400">
-                      {user.roles.map((role) => roleLabels[role.role]).join(', ')}
-                    </span>
-                  ) : null}
+                  {user ? <RoleSelector user={user} onChange={setActiveRole} /> : null}
                 </div>
                 <button
                   type="button"
@@ -146,7 +149,7 @@ export function AppLayout() {
           ) : null}
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
         <Outlet />
       </main>
     </div>
