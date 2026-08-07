@@ -1,5 +1,6 @@
 type TeamBadgeProps = {
   teamName: string;
+  logoUrl?: string | null;
 };
 
 function getInitials(teamName: string) {
@@ -13,13 +14,13 @@ function getInitials(teamName: string) {
     .toUpperCase() || 'T';
 }
 
-export function TeamBadge({ teamName }: TeamBadgeProps) {
+export function TeamBadge({ teamName, logoUrl }: TeamBadgeProps) {
   return (
     <div
       aria-hidden="true"
       className="team-badge"
     >
-      {getInitials(teamName)}
+      {logoUrl ? <img alt="" src={logoUrl} /> : getInitials(teamName)}
     </div>
   );
 }
