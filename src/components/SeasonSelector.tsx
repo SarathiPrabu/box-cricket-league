@@ -12,7 +12,7 @@ export function SeasonSelector({ seasons, selectedSeason, onChange, id }: Season
     <div className="mt-3 w-full sm:mt-0 sm:w-56">
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor={id}>Season</label>
       <select
-        className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-3 text-sm font-medium text-slate-950 shadow-sm transition focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500/40 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        className="form-select mt-2 font-medium shadow-sm sm:w-56"
         id={id}
         onChange={(event) => {
           const nextSeason = seasons.find((season) => season.season_id === event.target.value);
