@@ -45,6 +45,10 @@ season_rosters
 matches
 match_staff
 match_lineups
+match_innings
+match_batting_turns
+match_over_assignments
+match_deliveries
 match_player_stats
 ```
 
@@ -73,6 +77,12 @@ season_roster -> match_staff
 match -> match_lineups
 season_team -> match_lineups
 season_roster -> match_lineups
+
+match -> match_innings
+match_innings -> match_batting_turns
+match_innings -> match_over_assignments
+match_batting_turns -> match_deliveries
+match_over_assignments -> match_deliveries
 
 match -> match_player_stats
 match_lineup -> match_player_stats
@@ -239,9 +249,9 @@ Rules:
 
 - Managers belong to a season team, not permanently to a team.
 - A manager may also be a player.
-- A manager may not play.
-- `player_id` is optional because not every manager must be in the player pool.
-- `user_id` is optional until manager login/permissions are implemented.
+- A season team has at most one manager assignment.
+- Active manager assignments require both a rostered `player_id` and an authenticated `user_id` with the league `team_manager` role.
+- Legacy display-only manager rows may remain until an admin links them to an authenticated user.
 
 ### season_rosters
 
@@ -295,6 +305,7 @@ venue
 status
 youtube_url nullable
 winner_season_team_id nullable
+result_type nullable
 created_at
 updated_at
 ```
@@ -305,14 +316,48 @@ Rules:
 - Match teams must be season teams from the same season.
 - Do not reference plain `teams` from matches.
 - `youtube_url` can store a live stream or recorded match link.
+- `result_type` is `win`, `tie`, or `no_result` after finalization.
+- A five-player lineup makes the entire match five overs; two six-player lineups make it six overs.
+- Wides, no-balls, and dead balls are recorded but do not consume legal balls.
+- Each batsman receives an initial turn of up to six legal balls. A wicket ends that turn early.
+- After every lineup player has completed an initial turn or been dismissed, preserved balls may be faced by any not-out player.
 
 Suggested statuses:
 
 ```text
 scheduled
+live
 completed
 cancelled
 ```
+
+### match_innings
+
+Represents one innings of a live match.
+
+The innings snapshots its overs limit and balls-per-over rule so later season-rule changes cannot alter historical matches. `total_runs` stores the final team score, including extras, while the second innings stores the first innings score plus one as its target.
+
+An innings ends at its legal-ball limit, when no eligible batters remain, or when the chasing team reaches its target.
+
+### match_over_assignments
+
+Represents the bowler and wicketkeeper for one bowling over.
+
+There is one bowler per over and a bowler cannot exceed the innings snapshot of the season over limit. For the current season that limit is one over. The wicketkeeper must be a selected bowling-team player and cannot bowl that over. The keeper may change between overs.
+
+A completed over remains open for scorer corrections until it is explicitly confirmed. Confirmation records `confirmed_at`, locks its deliveries, and permits the next over to be assigned. A full final over must also be confirmed before the innings can end.
+
+### match_batting_turns
+
+Represents the batsman selected for a continuous batting turn. Initial turns end after six legal balls or a dismissal and may cross bowling-over boundaries. Once every player has completed an initial turn or been dismissed, flexible turns allow any not-out batsman to face the preserved balls.
+
+### match_deliveries
+
+The source of truth for live scoring. Each row records the batting turn, striker, bowler, delivery type, runs, extras, wicket, dismissal, and fielder context. New dismissals may be `bowled`, `caught`, `stumped`, `hit_wicket`, or `hit_out_of_field`; hit out of field credits the bowler and has no fielder. Historical `run_out` rows remain readable but cannot be recorded again.
+
+The wicketkeeper may change during an unconfirmed over. The over assignment stores the keeper for the next delivery, while any stumping already recorded keeps its original fielder credit. Confirming the over locks further keeper changes.
+
+Only legal deliveries advance the over count. Completed-match `match_player_stats` rows are derived atomically from these delivery records.
 
 ### match_staff
 
@@ -399,7 +444,7 @@ The "lineup team is playing this match", "roster belongs to lineup team", "at le
 
 ### match_player_stats
 
-Source of truth for player match statistics.
+Completed-match aggregate statistics derived from `match_deliveries`.
 
 Suggested fields:
 
@@ -422,7 +467,7 @@ updated_at
 
 Rules:
 
-- Store raw match stats only.
+- Store one aggregate row for each selected match lineup player.
 - Do not manually store duplicated career totals.
 - Derived statistics should come from PostgreSQL views or queries.
 - `match_lineup_id` is the main reference for the match, player, roster, and team context.
@@ -434,7 +479,7 @@ Rules:
 
 ## Statistics
 
-`match_player_stats` is the source of truth.
+`match_deliveries` is the source of truth for live scoring. `match_player_stats` is the finalized player aggregate used by player profiles and future leaderboards. Standings team totals use finalized `match_innings.total_runs` so extras are included without assigning them to an individual batter.
 
 Derived views can support:
 

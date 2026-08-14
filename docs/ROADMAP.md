@@ -76,8 +76,11 @@ Important:
 - [ ] Season roster management
 - [ ] Match setup
 - [ ] Match staff and video link setup
-- [ ] Match lineup entry
-- [ ] Score entry
+- [x] Season team manager assignment
+- [x] Match lineup entry
+- [x] Live score entry
+- [x] Match result finalization
+- [x] Derived completed-match player statistics
 
 ## Phase 7: Deployment
 

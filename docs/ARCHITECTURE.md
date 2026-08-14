@@ -43,6 +43,10 @@ Initial realtime scope:
 ```text
 matches
 match_lineups
+match_innings
+match_batting_turns
+match_over_assignments
+match_deliveries
 match_player_stats
 ```
 
@@ -52,6 +56,12 @@ Rules:
 - Only authenticated league admins or allowed future roles can write scores.
 - Viewers receive live updates by subscribing to the current match data.
 - Keep realtime limited to match pages until another feature clearly needs it.
+
+Delivery events are the live scoring source of truth. `match_batting_turns` controls which selected batsman may face each delivery and allows a six-legal-ball batting turn to cross bowling-over boundaries. Completed-match player aggregates are materialized into `match_player_stats` in the same finalization transaction that sets the result. Final innings team totals, including extras, are persisted separately on `match_innings` for standings and NRR.
+
+The current over remains editable after its sixth legal ball. The scorer explicitly confirms it before the database locks its deliveries and allows the next over to begin.
+
+The scorer route and live-scoring RPCs are temporarily public for review. Role-based protection must be restored before production use.
 
 ## Data Integrity
 
@@ -84,5 +94,5 @@ Add later only when the feature needs it:
 
 - Supabase Storage for team logos, player photos, or league assets.
 - Public league sharing.
-- Manager login and lineup submission.
+- Player-to-login mapping for player-specific pre-match lineup visibility.
 - Auction opt-in and bidding.
