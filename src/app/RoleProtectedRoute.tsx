@@ -2,6 +2,7 @@ import { type ReactElement } from 'react';
 import { useAuth, type LeagueRoleName } from '../features/auth/authState';
 import { PlaceholderPage } from '../components/PlaceholderPage';
 import { hasRoleForLeague } from './routeAuthorization';
+import { roleAccessEnabled } from './accessMode';
 
 type RoleProtectedRouteProps = {
   children: ReactElement;
@@ -15,6 +16,10 @@ export function RoleProtectedRoute({
   leagueSlug,
 }: RoleProtectedRouteProps) {
   const { user, isLoading } = useAuth();
+
+  if (!roleAccessEnabled) {
+    return children;
+  }
 
   if (isLoading) {
     return (

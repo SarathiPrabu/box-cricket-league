@@ -24,7 +24,7 @@ export type AuthContextValue = {
   isSignedIn: boolean;
   isLoading: boolean;
   authError: string | null;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   setActiveRole: (role: LeagueRoleName | null) => void;
   handleGoogleCredential: (credential: string) => Promise<void>;
 };

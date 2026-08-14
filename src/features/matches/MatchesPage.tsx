@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { SeasonSelector } from '../../components/SeasonSelector';
 import { useAuth } from '../auth/authState';
 import { hasRoleForLeague } from '../../app/routeAuthorization';
+import { roleAccessEnabled } from '../../app/accessMode';
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
-import { MatchCard, type MatchCardData } from './MatchCard';
+import { MatchCard, type MatchCardData } from '../../components/MatchCard';
 
 const leagueSlug = 'box-cricket-league';
 const communityPark = 'Community Park';
@@ -58,8 +59,11 @@ export function MatchesPage() {
     if (!seasons?.length) return null;
     return seasons.find((season) => seasonSlug(season.season_name) === requestedSeason) ?? seasons.find((season) => season.is_current) ?? seasons[0];
   }, [requestedSeason, seasons]);
-  const isAdmin = Boolean(
+  const isAdmin = !roleAccessEnabled || Boolean(
     user && hasRoleForLeague(user.roles, ['admin'], leagueSlug, user.activeRole),
+  );
+  const canManageSelection = !roleAccessEnabled || Boolean(
+    user && hasRoleForLeague(user.roles, ['admin', 'team_manager'], leagueSlug, user.activeRole),
   );
 
   const loadSeasons = useCallback(async () => {
@@ -178,8 +182,8 @@ export function MatchesPage() {
         <form className="mt-6 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900" onSubmit={(event) => { event.preventDefault(); void saveMatch('scheduled'); }}>
           <h3 className="font-semibold text-slate-950 dark:text-white">Schedule a match</h3>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Home team<select required value={homeTeamId} onChange={(event) => setHomeTeamId(event.target.value)} className="mt-1 block min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white"><option value="">Choose team</option>{teams.map((team) => <option key={team.season_team_id} value={team.season_team_id}>{team.team_name}</option>)}</select></label>
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Away team<select required value={awayTeamId} onChange={(event) => setAwayTeamId(event.target.value)} className="mt-1 block min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white"><option value="">Choose team</option>{teams.map((team) => <option key={team.season_team_id} value={team.season_team_id} disabled={team.season_team_id === homeTeamId}>{team.team_name}</option>)}</select></label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Home team<select required value={homeTeamId} onChange={(event) => setHomeTeamId(event.target.value)} className="form-select mt-1"><option value="">Choose team</option>{teams.map((team) => <option key={team.season_team_id} value={team.season_team_id}>{team.team_name}</option>)}</select></label>
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Away team<select required value={awayTeamId} onChange={(event) => setAwayTeamId(event.target.value)} className="form-select mt-1"><option value="">Choose team</option>{teams.map((team) => <option key={team.season_team_id} value={team.season_team_id} disabled={team.season_team_id === homeTeamId}>{team.team_name}</option>)}</select></label>
             <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Date and time<input required type="datetime-local" value={matchDate} onChange={(event) => setMatchDate(event.target.value)} className="mt-1 block min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white" /></label>
             <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Venue<input disabled value={communityPark} className="mt-1 block min-h-11 w-full rounded-md border border-slate-300 bg-slate-100 px-3 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300" /></label>
           </div>
@@ -195,10 +199,13 @@ export function MatchesPage() {
 
         return <MatchCard key={match.match_id} canEdit={canEdit} isEditing={isEditing} match={match} onEditToggle={canEdit ? () => isEditing ? setEditingMatchId(null) : startEditing(match) : undefined}>
           {isAdmin && match.status === 'draft' ? <div className="border-t border-slate-200 p-4 dark:border-slate-800"><button type="button" onClick={() => void publishMatch(match.match_id)} className="min-h-10 rounded-md bg-brand-500 px-3 text-sm font-semibold text-slate-950">Publish draft</button></div> : null}
+          {canManageSelection && match.status === 'scheduled' ? <div className="border-t border-slate-200 p-4 dark:border-slate-800"><Link className="inline-flex min-h-10 items-center rounded-md border border-brand-500 px-3 py-2 text-sm font-semibold text-brand-800 dark:text-brand-300" to={`/matches/${match.match_id}/lineup`}>{isAdmin ? 'Manage team lineups' : 'Select playing team'}</Link></div> : null}
+          {match.status === 'scheduled' ? <div className="border-t border-slate-200 p-4 dark:border-slate-800"><Link className="inline-flex min-h-10 items-center rounded-md bg-brand-500 px-3 py-2 text-sm font-semibold text-slate-950" to={`/matches/${match.match_id}/live`}>Start live match</Link></div> : null}
+          {match.status === 'live' ? <div className="border-t border-slate-200 p-4 dark:border-slate-800"><Link className="inline-flex min-h-10 items-center rounded-md bg-brand-500 px-3 py-2 text-sm font-semibold text-slate-950" to={`/matches/${match.match_id}/live`}>Open scorer</Link></div> : null}
           {isEditing ? <form className="border-t border-slate-200 p-4 dark:border-slate-800" onSubmit={(event) => { event.preventDefault(); void updateMatch(match.match_id); }}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Home team<select required value={editingHomeTeamId} onChange={(event) => setEditingHomeTeamId(event.target.value)} className="mt-1 block min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white">{teams.map((team) => <option key={team.season_team_id} value={team.season_team_id}>{team.team_name}</option>)}</select></label>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Away team<select required value={editingAwayTeamId} onChange={(event) => setEditingAwayTeamId(event.target.value)} className="mt-1 block min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white">{teams.map((team) => <option key={team.season_team_id} value={team.season_team_id} disabled={team.season_team_id === editingHomeTeamId}>{team.team_name}</option>)}</select></label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Home team<select required value={editingHomeTeamId} onChange={(event) => setEditingHomeTeamId(event.target.value)} className="form-select mt-1">{teams.map((team) => <option key={team.season_team_id} value={team.season_team_id}>{team.team_name}</option>)}</select></label>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Away team<select required value={editingAwayTeamId} onChange={(event) => setEditingAwayTeamId(event.target.value)} className="form-select mt-1">{teams.map((team) => <option key={team.season_team_id} value={team.season_team_id} disabled={team.season_team_id === editingHomeTeamId}>{team.team_name}</option>)}</select></label>
               <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Date and time<input required type="datetime-local" value={editingMatchDate} onChange={(event) => setEditingMatchDate(event.target.value)} className="mt-1 block min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white" /></label>
               <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Venue<input disabled value={communityPark} className="mt-1 block min-h-11 w-full rounded-md border border-slate-300 bg-slate-100 px-3 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300" /></label>
             </div>

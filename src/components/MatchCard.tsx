@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { TeamBadge } from '../../components/TeamBadge';
+import { TeamBadge } from './TeamBadge';
 
 export type MatchCardData = {
   match_id: string;
@@ -8,6 +8,8 @@ export type MatchCardData = {
   match_date: string | null;
   venue: string | null;
   status: 'draft' | 'scheduled' | 'live' | 'completed' | 'cancelled';
+  result_type?: 'win' | 'tie' | 'no_result' | null;
+  winner_team_name?: string | null;
 };
 
 type MatchCardProps = {
@@ -66,6 +68,11 @@ function MatchCardContent({ match, canEdit, isEditing }: Pick<MatchCardProps, 'm
           {match.venue || 'Community Park'}
         </span>
       </div>
+      {match.status === 'completed' && match.result_type ? (
+        <div className="border-t border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-800 dark:text-slate-200 sm:px-6">
+          {match.result_type === 'win' ? `Winner: ${match.winner_team_name ?? 'Team'}` : match.result_type === 'tie' ? 'Tie' : 'No result'}
+        </div>
+      ) : null}
     </>
   );
 }
