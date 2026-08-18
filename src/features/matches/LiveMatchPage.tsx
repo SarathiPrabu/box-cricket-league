@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ScoreButton } from '../../components/ScoreButton';
-import { TeamBadge } from '../../components/TeamBadge';
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
 import type {
   DeliveryType,
@@ -129,7 +128,7 @@ function formatDelivery(delivery: ScoringDelivery, lineups: ScoringLineup[]) {
       ? `Wide +${delivery.extra_runs}`
       : delivery.delivery_type === 'no_ball'
         ? `No-ball +${delivery.extra_runs}${delivery.batter_runs ? ` + ${delivery.batter_runs} off bat` : ''} = ${totalRuns}`
-        : 'Dead ball';
+        : `Dead ball +${delivery.extra_runs}${delivery.batter_runs ? ` + ${delivery.batter_runs} off bat = ${totalRuns}` : ''}`;
 
   const wicket = delivery.is_wicket
     ? ` · ${getDismissalLabel(delivery.dismissal_type)} ${getPlayerName(lineups, delivery.dismissed_season_roster_id)}`
@@ -140,24 +139,14 @@ function formatDelivery(delivery: ScoringDelivery, lineups: ScoringLineup[]) {
 
 function MatchHeading({ state }: { state: MatchScoringState }) {
   return (
-    <header className="surface-card p-3 sm:p-4">
-      <div className="flex items-center justify-between gap-3">
+    <header className="score-match-header">
+      <div className="score-match-header__top">
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-brand-600 dark:text-brand-400">Live scorer</p>
-          <h2 className="truncate text-base font-bold text-slate-950 dark:text-white sm:text-lg">
-            {state.match.home_team_name} vs {state.match.away_team_name}
-          </h2>
+          <p className="score-live-label"><span aria-hidden="true" /> LIVE · {state.match.home_team_name.toUpperCase()} VS {state.match.away_team_name.toUpperCase()}</p>
         </div>
-        <span className="shrink-0 rounded-full bg-brand-500 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-slate-950">
+        <span className="score-format">
           {state.match.status}
         </span>
-      </div>
-      <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
-        <TeamBadge teamName={state.match.home_team_name} />
-        <span className="min-w-0 truncate">{state.match.home_team_name}</span>
-        <span className="px-1 text-slate-400">vs</span>
-        <span className="min-w-0 truncate text-right">{state.match.away_team_name}</span>
-        <TeamBadge teamName={state.match.away_team_name} />
       </div>
     </header>
   );
@@ -174,35 +163,27 @@ function ScoreSummary({
   const legalBalls = getInningsLegalBalls(innings);
   const wickets = [...getDismissedIds(innings)].length;
   const runsRequired = innings.target_score === null ? null : Math.max(innings.target_score - score, 0);
-  const ballsRemaining = Math.max(innings.legal_balls_limit - legalBalls, 0);
   const targetReached = innings.target_score !== null && runsRequired === 0;
 
   return (
-    <section className="surface-card sticky top-2 z-10 border-brand-200 p-3 shadow-md dark:border-brand-900 sm:p-4">
-      <div className="flex items-end justify-between gap-3">
+    <section className="score-board sticky top-2 z-10">
+      <div className="score-board__main">
         <div className="min-w-0">
-          <p className="truncate text-xs font-bold text-slate-600 dark:text-slate-300">
-            Innings {innings.innings_number} · {teamName}
-          </p>
-          <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-slate-950 dark:text-white sm:text-4xl">
-              {score}/{wickets}
-            </span>
-            <span className="text-lg font-bold text-brand-600 dark:text-brand-400">
-              ({formatOvers(legalBalls, innings.balls_per_over)})
-            </span>
+          <div className="score-board__teams">
+            <strong>{teamName.slice(0, 3).toUpperCase()}</strong>
+            <span>Innings {innings.innings_number}</span>
           </div>
+          <p className="score-board__subline">{innings.target_score !== null ? `Target ${innings.target_score}` : 'Live scoring'}</p>
         </div>
-        <div className="text-right text-xs font-semibold text-slate-600 dark:text-slate-300">
-          <p>Limit {innings.overs_limit}.0 overs</p>
-          {innings.target_score !== null ? (
-            <p className="mt-1 text-sm font-black text-brand-700 dark:text-brand-300">
-              {targetReached
-                ? 'Target reached'
-                : `${runsRequired} run${runsRequired === 1 ? '' : 's'} off ${ballsRemaining} ball${ballsRemaining === 1 ? '' : 's'}`}
-            </p>
-          ) : null}
+        <div className="score-board__total">
+          <strong>{score}/{wickets}</strong>
+          <span>{formatOvers(legalBalls, innings.balls_per_over)} Overs</span>
         </div>
+      </div>
+      <div className="score-board__metrics">
+        <div><span>Current RR</span><strong>{legalBalls ? (score / (legalBalls / 6)).toFixed(2) : '0.00'}</strong></div>
+        <div><span>Proj score</span><strong>{legalBalls ? Math.round(score / legalBalls * innings.legal_balls_limit) : '—'}</strong></div>
+        <div className="score-board__metric--accent"><span>{targetReached ? 'Status' : 'Runs required'}</span><strong>{targetReached ? 'Target reached' : runsRequired ?? '—'}</strong></div>
       </div>
     </section>
   );
@@ -220,6 +201,7 @@ export function LiveMatchPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [firstBattingTeamId, setFirstBattingTeamId] = useState('');
+  const [historicalEntry, setHistoricalEntry] = useState(false);
   const [playerOfMatchId, setPlayerOfMatchId] = useState('');
   const [overForm, setOverForm] = useState<OverForm>({
     bowlerId: '',
@@ -229,6 +211,9 @@ export function LiveMatchPage() {
   const [changingFlexibleBatter, setChangingFlexibleBatter] = useState(false);
   const [dismissalType, setDismissalType] = useState<DismissalType>('bowled');
   const [fielderId, setFielderId] = useState('');
+  const [stumpingPromptOpen, setStumpingPromptOpen] = useState(false);
+  const [stumpingWicketkeeperId, setStumpingWicketkeeperId] = useState('');
+  const [stumpingDeliveryType, setStumpingDeliveryType] = useState<DeliveryType>('legal');
   const [editingDelivery, setEditingDelivery] = useState<EditDeliveryForm | null>(null);
 
   const loadState = useCallback(async () => {
@@ -277,6 +262,9 @@ export function LiveMatchPage() {
     if (!state) return;
     setFirstBattingTeamId((current) => current || state.match.home_season_team_id);
     setPlayerOfMatchId((current) => current || state.lineups[0]?.id || '');
+    if (state.match.status === 'scheduled') {
+      setHistoricalEntry(state.match.historical_batting_exception);
+    }
   }, [state]);
 
   const activeInnings = useMemo(
@@ -307,9 +295,10 @@ export function LiveMatchPage() {
       (player) => currentOver?.bowler_season_roster_id === player.season_roster_id
         || getBowlerOverCount(activeInnings, player.season_roster_id) < activeInnings.max_overs_per_player,
     );
+    const selectedBowlerId = currentOver?.bowler_season_roster_id ?? availableBowlers[0]?.season_roster_id ?? '';
     setOverForm({
-      bowlerId: currentOver?.bowler_season_roster_id ?? availableBowlers[0]?.season_roster_id ?? '',
-      wicketkeeperId: currentOver?.wicketkeeper_season_roster_id ?? bowlingPlayers.find((player) => player.season_roster_id !== (availableBowlers[0]?.season_roster_id ?? ''))?.season_roster_id ?? '',
+      bowlerId: selectedBowlerId,
+      wicketkeeperId: currentOver?.wicketkeeper_season_roster_id ?? selectedBowlerId,
     });
     setFielderId(currentOver?.wicketkeeper_season_roster_id ?? '');
     setDismissalType('bowled');
@@ -336,6 +325,13 @@ export function LiveMatchPage() {
       setError('Choose the first batting team.');
       return;
     }
+    if (historicalEntry && !state?.match.historical_batting_exception) {
+      const exceptionResult = await runAction('set_match_historical_batting_exception', {
+        target_match_id: matchId,
+        enabled: true,
+      });
+      if (exceptionResult !== true) return;
+    }
     await runAction('start_match', {
       target_match_id: matchId,
       first_batting_season_team_id: firstBattingTeamId,
@@ -343,8 +339,8 @@ export function LiveMatchPage() {
   }
 
   async function assignOver() {
-    if (!activeInnings || !overForm.bowlerId || !overForm.wicketkeeperId) {
-      setError('Choose the bowler and wicketkeeper.');
+    if (!activeInnings || !overForm.bowlerId) {
+      setError('Choose the bowler.');
       return;
     }
     await runAction('set_match_over_assignment', {
@@ -353,22 +349,6 @@ export function LiveMatchPage() {
       target_bowler_season_roster_id: overForm.bowlerId,
       target_wicketkeeper_season_roster_id: overForm.wicketkeeperId,
     });
-  }
-
-  async function changeWicketkeeper(wicketkeeperId: string) {
-    if (!currentOver || !wicketkeeperId) return;
-
-    const previousWicketkeeperId = currentOver.wicketkeeper_season_roster_id;
-    setOverForm((current) => ({ ...current, wicketkeeperId }));
-
-    const result = await runAction('change_current_over_wicketkeeper', {
-      target_over_assignment_id: currentOver.id,
-      target_wicketkeeper_season_roster_id: wicketkeeperId,
-    });
-
-    if (!result) {
-      setOverForm((current) => ({ ...current, wicketkeeperId: previousWicketkeeperId }));
-    }
   }
 
   async function selectBatter() {
@@ -394,6 +374,7 @@ export function LiveMatchPage() {
     extraRuns = 0,
     wicket = false,
     dismissalOverride?: DismissalType,
+    wicketkeeperOverride?: string,
   ) {
     if (!activeInnings || !currentOver || !activeBattingTurn) {
       setError('Choose the next batsman before recording the delivery.');
@@ -411,6 +392,7 @@ export function LiveMatchPage() {
     }
 
     const appliedDismissalType = dismissalOverride ?? dismissalType;
+    const appliedWicketkeeperId = wicketkeeperOverride ?? overForm.wicketkeeperId;
     await runAction('record_match_delivery', {
       target_over_assignment_id: currentOver.id,
       target_striker_season_roster_id: activeBattingTurn.batter_season_roster_id,
@@ -422,11 +404,33 @@ export function LiveMatchPage() {
       target_dismissed_season_roster_id: wicket ? activeBattingTurn.batter_season_roster_id : null,
       target_dismissal_type: wicket ? appliedDismissalType : null,
       target_fielder_season_roster_id: wicket && appliedDismissalType === 'stumped'
-        ? overForm.wicketkeeperId
+        ? appliedWicketkeeperId
         : wicket && appliedDismissalType === 'caught'
           ? fielderId || null
           : null,
     });
+  }
+
+  async function recordStumping(deliveryType: DeliveryType, batterRuns = 0, extraRuns = 0) {
+    if (!stumpingWicketkeeperId || !currentOver) {
+      setError('Choose the wicketkeeper for this stumping.');
+      return;
+    }
+    if (stumpingWicketkeeperId === currentOver.bowler_season_roster_id) {
+      setError('Choose a wicketkeeper other than the bowler.');
+      return;
+    }
+    const keeperChanged = stumpingWicketkeeperId !== currentOver.wicketkeeper_season_roster_id;
+    if (keeperChanged) {
+      const result = await runAction('change_current_over_wicketkeeper', {
+        target_over_assignment_id: currentOver.id,
+        target_wicketkeeper_season_roster_id: stumpingWicketkeeperId,
+      });
+      if (!result) return;
+    }
+    setOverForm((current) => ({ ...current, wicketkeeperId: stumpingWicketkeeperId }));
+    setStumpingPromptOpen(false);
+    await recordDelivery(deliveryType, batterRuns, extraRuns, true, 'stumped', stumpingWicketkeeperId);
   }
 
   async function completeInnings() {
@@ -521,20 +525,24 @@ export function LiveMatchPage() {
   const availableBatters = currentBattingPlayers.filter((player) => !dismissed.has(player.season_roster_id));
   const battingTurns = activeInnings?.batting_turns ?? [];
   const activeBattingTurn = battingTurns.find((turn) => turn.status === 'active') ?? null;
-  const initialPhaseComplete = Boolean(activeInnings && currentBattingPlayers.every((player) => (
-    battingTurns.some((turn) => (
-      turn.phase === 'initial'
-      && turn.batter_season_roster_id === player.season_roster_id
-      && turn.status === 'ended'
-      && (turn.end_reason === 'six_balls' || turn.end_reason === 'dismissed')
-    ))
-  )));
-  const battingPhase = initialPhaseComplete ? 'flexible' : 'initial';
   const initialTurnPlayerIds = new Set(
     battingTurns
       .filter((turn) => turn.phase === 'initial')
       .map((turn) => turn.batter_season_roster_id),
   );
+  const initialPhaseComplete = Boolean(activeInnings && (
+    state.match.historical_batting_exception
+      ? initialTurnPlayerIds.size >= Math.max(currentBattingPlayers.length - 1, 0)
+      : currentBattingPlayers.every((player) => (
+        battingTurns.some((turn) => (
+          turn.phase === 'initial'
+          && turn.batter_season_roster_id === player.season_roster_id
+          && turn.status === 'ended'
+          && (turn.end_reason === 'six_balls' || turn.end_reason === 'dismissed')
+        ))
+      ))
+  ));
+  const battingPhase = initialPhaseComplete ? 'flexible' : 'initial';
   const eligibleBatters = availableBatters.filter((player) => (
     battingPhase === 'flexible'
     || !initialTurnPlayerIds.has(player.season_roster_id)
@@ -549,7 +557,13 @@ export function LiveMatchPage() {
         ? getBowlerOverCount(activeInnings, player.season_roster_id) < activeInnings.max_overs_per_player
         : false),
   );
-  const keeperOptions = currentBowlingPlayers.filter((player) => player.season_roster_id !== overForm.bowlerId);
+  const currentBowlerId = currentOver?.bowler_season_roster_id ?? overForm.bowlerId;
+  const keeperOptions = currentBowlingPlayers.filter((player) => player.season_roster_id !== currentBowlerId);
+  const defaultStumpingWicketkeeperId = keeperOptions.some(
+    (player) => player.season_roster_id === currentOver?.wicketkeeper_season_roster_id,
+  )
+    ? currentOver?.wicketkeeper_season_roster_id ?? ''
+    : keeperOptions[0]?.season_roster_id ?? '';
   const currentOverComplete = Boolean(
     activeInnings
     && currentOver
@@ -570,12 +584,12 @@ export function LiveMatchPage() {
   const canRecordWicket = Boolean(activeBattingTurn);
 
   return (
-    <section className="mx-auto max-w-3xl space-y-4">
+    <section className="score-page mx-auto max-w-3xl space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <Link className="text-xs font-bold text-brand-700 hover:underline dark:text-brand-300" to="/matches">
+        <Link className="score-back text-xs font-bold" to="/matches">
           ← Matches
         </Link>
-        {isCompleted ? <button className="text-xs font-bold text-slate-600 hover:underline dark:text-slate-300" onClick={() => navigate('/standings')} type="button">View standings</button> : null}
+        {isCompleted ? <button className="score-back text-xs font-bold" onClick={() => navigate('/standings')} type="button">View standings</button> : null}
       </div>
 
       <MatchHeading state={state} />
@@ -603,37 +617,49 @@ export function LiveMatchPage() {
               value={firstBattingTeamId}
             />
           </div>
+          <label className="mt-4 flex min-h-11 items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+            <input
+              checked={historicalEntry}
+              className="mt-1 h-4 w-4 accent-brand-500"
+              disabled={saving || state.match.historical_batting_exception}
+              onChange={(event) => setHistoricalEntry(event.target.checked)}
+              type="checkbox"
+            />
+            <span>
+              <span className="block font-bold">Historical entry: allow incomplete batting turns</span>
+              <span className="mt-1 block text-xs text-amber-800 dark:text-amber-200">
+                Use only when the recorded match did not give every lineup player a batting turn. This setting cannot be changed after the match starts.
+              </span>
+            </span>
+          </label>
         </section>
       ) : null}
 
       {activeInnings ? <ScoreSummary innings={activeInnings} teamName={activeInnings.batting_season_team_id === state.match.home_season_team_id ? state.match.home_team_name : state.match.away_team_name} /> : null}
 
+      {activeInnings && currentOver && activeBattingTurn ? (
+        <section className="score-player-card">
+          <div className="score-player-card__heading"><span>Batsman</span><span>R</span><span>B</span><span>SR</span></div>
+          <div className="score-player-card__row">
+            <strong><span aria-hidden="true" className="score-player-dot" />{activeBattingTurn.batter_name}</strong>
+            <strong>{activeInnings.overs.flatMap((over) => over.deliveries).filter((delivery) => delivery.striker_season_roster_id === activeBattingTurn.batter_season_roster_id).reduce((total, delivery) => total + delivery.batter_runs, 0)}</strong>
+            <span>({activeBattingTurn.legal_balls_faced})</span>
+            <span>{activeBattingTurn.legal_balls_faced ? (activeInnings.overs.flatMap((over) => over.deliveries).filter((delivery) => delivery.striker_season_roster_id === activeBattingTurn.batter_season_roster_id).reduce((total, delivery) => total + delivery.batter_runs, 0) / activeBattingTurn.legal_balls_faced * 100).toFixed(1) : '0.0'}</span>
+          </div>
+          <div className="score-player-card__bowler"><span>Bowler</span><strong>{currentOver.bowler_name}</strong><span>Over {currentOver.over_number}</span></div>
+        </section>
+      ) : null}
+
       {activeInnings && currentOver ? (
-        <section className="surface-card p-4">
+        <section className="score-over-card surface-card p-4">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <p className="text-xs font-black uppercase tracking-wide text-brand-600 dark:text-brand-400">Over {currentOver.over_number}</p>
+              <p className="score-section-label">This over · {currentOver.bowler_name}</p>
               <h3 className="mt-1 text-base font-bold text-slate-950 dark:text-white">
                 {currentOver.bowler_name} bowling
               </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300">
-                Keeper {currentOver.wicketkeeper_name}
-              </p>
             </div>
-            <p className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-700 dark:bg-slate-900 dark:text-slate-200">
-              {formatOvers(getInningsLegalBalls(activeInnings), activeInnings.balls_per_over)}
-            </p>
-          </div>
-
-          <div className="mt-3 max-w-sm">
-            <SelectField
-              disabled={saving}
-              label="Wicketkeeper"
-              onChange={(value) => void changeWicketkeeper(value)}
-              options={keeperOptions.map((player) => ({ value: player.season_roster_id, label: player.player_name }))}
-              value={overForm.wicketkeeperId}
-            />
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">A change applies from the next delivery.</p>
+            <p className="score-over-runs">Runs: {currentOver.deliveries.reduce((total, delivery) => total + delivery.batter_runs + delivery.extra_runs, 0)}</p>
           </div>
 
           {activeBattingTurn ? (
@@ -666,8 +692,9 @@ export function LiveMatchPage() {
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div>
+              {/*<p className="score-keypad-label">Interactive scoring keypad</p>*/}
               <SectionLabel>Runs off bat</SectionLabel>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="score-over-balls">
                 {LEGAL_RUNS.map((runs) => (
                   <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} key={runs} onClick={() => void recordDelivery('legal', runs)} tone={runs === 4 || runs === 6 ? 'accent' : 'default'}>
                     {runs}
@@ -677,7 +704,7 @@ export function LiveMatchPage() {
             </div>
             <div>
               <SectionLabel>No-ball · 1 extra + bat runs</SectionLabel>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="score-over-balls">
                 {NO_BALL_BATTER_RUNS.map((runs) => (
                   <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} key={runs} onClick={() => void recordDelivery('no_ball', runs, 1)} tone="accent">
                     NB +{runs}
@@ -689,7 +716,7 @@ export function LiveMatchPage() {
 
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => void recordDelivery('wide', 0, 1)}>Wide +1</ScoreButton>
-            <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => void recordDelivery('dead_ball')}>Dead ball</ScoreButton>
+            <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => void recordDelivery('dead_ball', 0, 1)}>Dead ball +1</ScoreButton>
           </div>
 
           <div className="mt-4 rounded-xl border border-red-200 bg-red-50/70 p-3 dark:border-red-900 dark:bg-red-950/20">
@@ -701,21 +728,32 @@ export function LiveMatchPage() {
                 options={DISMISSAL_OPTIONS}
                 value={dismissalType}
               />
-              <SelectField
-                disabled={dismissalType !== 'caught'}
-                label="Fielder"
-                onChange={setFielderId}
-                options={dismissalType === 'stumped'
-                  ? [{ value: overForm.wicketkeeperId, label: getPlayerName(state.lineups, overForm.wicketkeeperId) }]
-                  : currentBowlingPlayers.map((player) => ({ value: player.season_roster_id, label: player.player_name }))}
-                value={dismissalType === 'stumped' ? overForm.wicketkeeperId : fielderId}
-              />
+              {dismissalType === 'caught' ? (
+                <SelectField
+                  label="Fielder"
+                  onChange={setFielderId}
+                  options={currentBowlingPlayers.map((player) => ({ value: player.season_roster_id, label: player.player_name }))}
+                  value={fielderId}
+                />
+              ) : <div />}
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || !canRecordWicket || currentOverComplete} onClick={() => void recordDelivery('legal', 0, 0, true)} tone="danger">
+              <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || !canRecordWicket || currentOverComplete} onClick={() => {
+                if (dismissalType === 'stumped') {
+                  setStumpingDeliveryType('legal');
+                  setStumpingWicketkeeperId(defaultStumpingWicketkeeperId);
+                  setStumpingPromptOpen(true);
+                } else {
+                  void recordDelivery('legal', 0, 0, true);
+                }
+              }} tone="danger">
                 Record wicket
               </ScoreButton>
-              <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || !canRecordWicket || currentOverComplete} onClick={() => void recordDelivery('wide', 0, 1, true, 'stumped')} tone="danger">
+              <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || !canRecordWicket || currentOverComplete} onClick={() => {
+                setStumpingDeliveryType('wide');
+                setStumpingWicketkeeperId(defaultStumpingWicketkeeperId);
+                setStumpingPromptOpen(true);
+              }} tone="danger">
                 Wide + stumping
               </ScoreButton>
             </div>
@@ -757,19 +795,13 @@ export function LiveMatchPage() {
       {activeInnings && !currentOver && !inningsCanEnd && activeInnings.status === 'live' ? (
         <section className="surface-card p-4">
           <h3 className="text-base font-bold text-slate-950 dark:text-white">Set over {nextOverNumber}</h3>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Choose the bowler and keeper. The current batsman continues across overs.</p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">The current batsman continues across overs.</p>
+          <div className="mt-3">
             <SelectField
               label="Bowler"
-              onChange={(value) => setOverForm((current) => ({ ...current, bowlerId: value, wicketkeeperId: value === current.wicketkeeperId ? '' : current.wicketkeeperId }))}
+              onChange={(value) => setOverForm({ bowlerId: value, wicketkeeperId: value })}
               options={availableBowlers.map((player) => ({ value: player.season_roster_id, label: player.player_name }))}
               value={overForm.bowlerId}
-            />
-            <SelectField
-              label="Wicketkeeper"
-              onChange={(value) => setOverForm((current) => ({ ...current, wicketkeeperId: value }))}
-              options={keeperOptions.map((player) => ({ value: player.season_roster_id, label: player.player_name }))}
-              value={overForm.wicketkeeperId}
             />
           </div>
           <ScoreButton className="mt-3" disabled={saving} onClick={() => void assignOver()} tone="accent">Assign over</ScoreButton>
@@ -862,6 +894,28 @@ export function LiveMatchPage() {
         </div>
       ) : null}
 
+      {stumpingPromptOpen && currentOver ? (
+        <div className="fixed inset-0 z-30 flex items-end justify-center bg-slate-950/50 p-3 sm:items-center">
+          <section aria-labelledby="stumping-prompt-title" aria-modal="true" className="w-full max-w-md rounded-2xl bg-white p-4 shadow-2xl dark:bg-slate-900 sm:p-5" role="dialog">
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-brand-600 dark:text-brand-400">Stumping</p>
+            <h3 className="mt-1 text-lg font-bold text-slate-950 dark:text-white" id="stumping-prompt-title">Choose the wicketkeeper</h3>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Select who should receive credit for this stumping.</p>
+            <div className="mt-4">
+              <SelectField
+                label="Wicketkeeper"
+                onChange={setStumpingWicketkeeperId}
+                options={keeperOptions.map((player) => ({ value: player.season_roster_id, label: player.player_name }))}
+                value={stumpingWicketkeeperId}
+              />
+            </div>
+            <div className="mt-4 flex gap-2">
+              <ScoreButton className="flex-1" disabled={saving || !stumpingWicketkeeperId || stumpingWicketkeeperId === currentOver?.bowler_season_roster_id} onClick={() => void recordStumping(stumpingDeliveryType, 0, stumpingDeliveryType === 'wide' ? 1 : 0)} tone="danger">Record stumping</ScoreButton>
+              <ScoreButton className="flex-1" disabled={saving} onClick={() => setStumpingPromptOpen(false)}>Cancel</ScoreButton>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
       {editingDelivery ? (
         <div className="fixed inset-0 z-20 flex items-end justify-center bg-slate-950/50 p-3 sm:items-center">
           <section className="w-full max-w-2xl rounded-2xl bg-white p-4 shadow-2xl dark:bg-slate-900 sm:p-5">
@@ -872,7 +926,11 @@ export function LiveMatchPage() {
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <SelectField
                 label="Delivery type"
-                onChange={(value) => setEditingDelivery((current) => current ? { ...current, deliveryType: value as DeliveryType } : current)}
+                onChange={(value) => setEditingDelivery((current) => current ? {
+                  ...current,
+                  deliveryType: value as DeliveryType,
+                  extraRuns: value === 'dead_ball' && current.deliveryType !== 'dead_ball' ? '1' : current.extraRuns,
+                } : current)}
                 options={[
                   { value: 'legal', label: 'Legal ball' },
                   { value: 'wide', label: 'Wide' },
@@ -888,7 +946,9 @@ export function LiveMatchPage() {
             {editingDelivery.isWicket ? (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <SelectField label="Dismissal" onChange={(value) => setEditingDelivery((current) => current ? { ...current, dismissalType: value as DismissalType } : current)} options={DISMISSAL_OPTIONS} value={editingDelivery.dismissalType} />
-                <SelectField disabled={editingDelivery.dismissalType !== 'caught'} label="Fielder" onChange={(value) => setEditingDelivery((current) => current ? { ...current, fielderId: value } : current)} options={editingDelivery.dismissalType === 'stumped' ? [{ value: overForm.wicketkeeperId, label: getPlayerName(state.lineups, overForm.wicketkeeperId) }] : currentBowlingPlayers.map((player) => ({ value: player.season_roster_id, label: player.player_name }))} value={editingDelivery.dismissalType === 'stumped' ? overForm.wicketkeeperId : editingDelivery.fielderId} />
+                {editingDelivery.dismissalType === 'caught' ? (
+                  <SelectField label="Fielder" onChange={(value) => setEditingDelivery((current) => current ? { ...current, fielderId: value } : current)} options={currentBowlingPlayers.map((player) => ({ value: player.season_roster_id, label: player.player_name }))} value={editingDelivery.fielderId} />
+                ) : <div />}
               </div>
             ) : null}
             <div className="mt-4 flex flex-wrap gap-2">
