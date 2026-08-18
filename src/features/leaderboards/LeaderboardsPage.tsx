@@ -28,7 +28,6 @@ type LeaderboardRow = {
   fours: number;
   sixes: number;
   balls_bowled: number;
-  dot_balls_bowled: number;
   runs_conceded: number;
   wickets: number;
   catches: number;
@@ -84,12 +83,6 @@ const leaderboardDefinitions: LeaderboardDefinition[] = [
     value: (row) => row.wickets,
     secondaryLabel: 'Economy',
     secondaryValue: (row) => formatRate(row.runs_conceded, row.balls_bowled, 6),
-  },
-  {
-    title: 'Most dot balls',
-    description: 'Most scoreless balls bowled',
-    valueLabel: 'Dot balls',
-    value: (row) => row.dot_balls_bowled,
   },
   {
     title: 'Most catches',
@@ -194,22 +187,10 @@ function LeaderboardCard({
   );
 }
 
-function LeaderboardGrid({
-  rows,
-  loading = false,
-  showDotBalls,
-}: {
-  rows?: LeaderboardRow[];
-  loading?: boolean;
-  showDotBalls: boolean;
-}) {
-  const definitions = showDotBalls
-    ? leaderboardDefinitions
-    : leaderboardDefinitions.filter((definition) => definition.title !== 'Most dot balls');
-
+function LeaderboardGrid({ rows, loading = false }: { rows?: LeaderboardRow[]; loading?: boolean }) {
   return (
     <div className="mt-6 grid gap-4 md:grid-cols-2">
-      {definitions.map((definition) => (
+      {leaderboardDefinitions.map((definition) => (
         <LeaderboardCard definition={definition} key={definition.title} loading={loading} rows={rows} />
       ))}
     </div>
@@ -307,7 +288,7 @@ export function LeaderboardsPage() {
       <section>
         <h2 className="text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">Leaderboards</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Loading league seasons.</p>
-        <LeaderboardGrid loading showDotBalls={false} />
+        <LeaderboardGrid loading />
       </section>
     );
   }
@@ -326,7 +307,6 @@ export function LeaderboardsPage() {
   }
 
   const leagueName = seasonsState.seasons[0]?.league_name ?? 'Box Cricket League';
-  const showDotBalls = seasonSlug(selectedSeason.season_name) !== 'season-1';
 
   return (
     <section>
@@ -345,17 +325,13 @@ export function LeaderboardsPage() {
         />
       </div>
 
-      {leaderboardsState.status === 'loading' || leaderboardsState.status === 'idle' ? (
-        <LeaderboardGrid loading showDotBalls={showDotBalls} />
-      ) : null}
+      {leaderboardsState.status === 'loading' || leaderboardsState.status === 'idle' ? <LeaderboardGrid loading /> : null}
 
       {leaderboardsState.status === 'error' ? (
         <InfoCard className="mt-6" message="Unable to load leaderboards right now." />
       ) : null}
 
-      {leaderboardsState.status === 'ready' ? (
-        <LeaderboardGrid rows={leaderboardsState.rows} showDotBalls={showDotBalls} />
-      ) : null}
+      {leaderboardsState.status === 'ready' ? <LeaderboardGrid rows={leaderboardsState.rows} /> : null}
     </section>
   );
 }
