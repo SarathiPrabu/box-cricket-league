@@ -20,6 +20,7 @@ export type ScoringMatch = {
   away_team_name: string;
   match_date: string | null;
   venue: string | null;
+  historical_batting_exception: boolean;
   balls_per_over: number;
   max_overs_per_player: number;
 };
