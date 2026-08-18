@@ -28,6 +28,7 @@ type LeaderboardRow = {
   fours: number;
   sixes: number;
   balls_bowled: number;
+  dot_balls_bowled: number;
   runs_conceded: number;
   wickets: number;
   catches: number;
@@ -51,6 +52,9 @@ type LeaderboardDefinition = {
   description: string;
   valueLabel: string;
   value: (row: LeaderboardRow) => number;
+  formatValue?: (row: LeaderboardRow) => string;
+  isEligible?: (row: LeaderboardRow) => boolean;
+  sortAscending?: boolean;
   secondaryLabel?: string;
   secondaryValue?: (row: LeaderboardRow) => string;
 };
@@ -85,6 +89,22 @@ const leaderboardDefinitions: LeaderboardDefinition[] = [
     secondaryValue: (row) => formatRate(row.runs_conceded, row.balls_bowled, 6),
   },
   {
+    title: 'Best economy',
+    description: 'Most economical bowlers',
+    valueLabel: 'Economy',
+    value: (row) => (row.runs_conceded / row.balls_bowled) * 6,
+    formatValue: (row) => formatRate(row.runs_conceded, row.balls_bowled, 6),
+    isEligible: (row) => row.balls_bowled > 0,
+    sortAscending: true,
+  },
+  // Temporarily hidden from the frontend; the database value remains available.
+  // {
+  //   title: 'Most dot balls',
+  //   description: 'Most scoreless balls bowled',
+  //   valueLabel: 'Dot balls',
+  //   value: (row) => row.dot_balls_bowled,
+  // },
+  {
     title: 'Most catches',
     description: 'Leading fielders',
     valueLabel: 'Catches',
@@ -112,9 +132,11 @@ const leaderboardDefinitions: LeaderboardDefinition[] = [
 
 function topRows(rows: LeaderboardRow[], definition: LeaderboardDefinition) {
   return rows
-    .filter((row) => definition.value(row) > 0)
+    .filter((row) => definition.isEligible?.(row) ?? definition.value(row) > 0)
     .sort((first, second) => {
-      const valueDifference = definition.value(second) - definition.value(first);
+      const valueDifference = definition.sortAscending
+        ? definition.value(first) - definition.value(second)
+        : definition.value(second) - definition.value(first);
       return valueDifference || first.player_name.localeCompare(second.player_name);
     })
     .slice(0, leaderboardLimit);
@@ -170,7 +192,8 @@ function LeaderboardCard({
               </div>
               <div className="shrink-0 text-right">
                 <p className="font-semibold text-slate-950 dark:text-white">
-                  {definition.value(row)} <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{definition.valueLabel}</span>
+                  {definition.formatValue ? definition.formatValue(row) : definition.value(row)}{' '}
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{definition.valueLabel}</span>
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                   {definition.secondaryLabel && definition.secondaryValue
@@ -187,10 +210,22 @@ function LeaderboardCard({
   );
 }
 
-function LeaderboardGrid({ rows, loading = false }: { rows?: LeaderboardRow[]; loading?: boolean }) {
+function LeaderboardGrid({
+  rows,
+  loading = false,
+  showDotBalls,
+}: {
+  rows?: LeaderboardRow[];
+  loading?: boolean;
+  showDotBalls: boolean;
+}) {
+  const definitions = showDotBalls
+    ? leaderboardDefinitions
+    : leaderboardDefinitions.filter((definition) => definition.title !== 'Most dot balls');
+
   return (
     <div className="mt-6 grid gap-4 md:grid-cols-2">
-      {leaderboardDefinitions.map((definition) => (
+      {definitions.map((definition) => (
         <LeaderboardCard definition={definition} key={definition.title} loading={loading} rows={rows} />
       ))}
     </div>
@@ -288,7 +323,7 @@ export function LeaderboardsPage() {
       <section>
         <h2 className="text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">Leaderboards</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Loading league seasons.</p>
-        <LeaderboardGrid loading />
+        <LeaderboardGrid loading showDotBalls={false} />
       </section>
     );
   }
@@ -307,6 +342,7 @@ export function LeaderboardsPage() {
   }
 
   const leagueName = seasonsState.seasons[0]?.league_name ?? 'Box Cricket League';
+  const showDotBalls = seasonSlug(selectedSeason.season_name) !== 'season-1';
 
   return (
     <section>
@@ -325,13 +361,17 @@ export function LeaderboardsPage() {
         />
       </div>
 
-      {leaderboardsState.status === 'loading' || leaderboardsState.status === 'idle' ? <LeaderboardGrid loading /> : null}
+      {leaderboardsState.status === 'loading' || leaderboardsState.status === 'idle' ? (
+        <LeaderboardGrid loading showDotBalls={showDotBalls} />
+      ) : null}
 
       {leaderboardsState.status === 'error' ? (
         <InfoCard className="mt-6" message="Unable to load leaderboards right now." />
       ) : null}
 
-      {leaderboardsState.status === 'ready' ? <LeaderboardGrid rows={leaderboardsState.rows} /> : null}
+      {leaderboardsState.status === 'ready' ? (
+        <LeaderboardGrid rows={leaderboardsState.rows} showDotBalls={showDotBalls} />
+      ) : null}
     </section>
   );
 }

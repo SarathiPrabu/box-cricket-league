@@ -25,14 +25,10 @@ function formatNrr(value: number) {
 }
 
 function teamAbbreviation(teamName: string) {
-  return teamName
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) => part[0] ?? '')
-    .join('')
-    .slice(0, 3)
-    .toUpperCase();
+  const parts = teamName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+
+  return parts.map((part) => part[0] ?? '').join('').slice(0, 3).toUpperCase();
 }
 
 function formatInningsTotal(runs: number, balls: number) {
