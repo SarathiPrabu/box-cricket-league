@@ -453,7 +453,7 @@ export function PublicLiveScorePage() {
           ) : null}
 
           <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(22rem,0.85fr)]">
-            <CommentaryPanel innings={displayInnings} state={state} />
+            <CommentaryPanel innings={scorecardInnings ?? displayInnings} state={state} />
             {scorecardInnings ? <ScorecardPanel innings={scorecardInnings} state={state} /> : null}
           </div>
         </>
