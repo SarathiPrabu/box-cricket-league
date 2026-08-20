@@ -46,8 +46,10 @@ export type FallOfWicket = {
 
 export type CommentaryItem = {
   id: string;
+  overNumber: number;
   ballLabel: string;
   badge: string;
+  runs: number;
   tone: 'default' | 'boundary' | 'wicket';
   description: string;
 };
@@ -380,8 +382,10 @@ export function getCommentary(
 
       return {
         id: delivery.id,
+        overNumber: context.overNumber,
         ballLabel: context.ballLabel,
         badge,
+        runs: totalRuns,
         tone: delivery.is_wicket
           ? 'wicket' as const
           : delivery.batter_runs === 4 || delivery.batter_runs === 6

@@ -34,7 +34,33 @@ function getResultMessage(state: MatchScoringState) {
   if (state.match.result_type === 'tie') return 'Match tied';
   if (state.match.result_type === 'no_result') return 'No result';
   if (state.match.result_type === 'win' && state.match.winner_season_team_id) {
-    return `${getTeamName(state, state.match.winner_season_team_id)} won`;
+    const winnerTeamName = getTeamName(state, state.match.winner_season_team_id);
+    const winnerInnings = state.innings.find(
+      (innings) => innings.batting_season_team_id === state.match.winner_season_team_id
+        || getTeamName(state, innings.batting_season_team_id) === winnerTeamName,
+    );
+    const otherInnings = state.innings.find(
+      (innings) => innings !== winnerInnings,
+    );
+
+    if (winnerInnings && otherInnings) {
+      const winnerTotals = getInningsTotals(winnerInnings);
+      const otherTotals = getInningsTotals(otherInnings);
+      if (winnerInnings.innings_number === 1) {
+        const runMargin = Math.max(winnerTotals.runs - otherTotals.runs, 0);
+        return `${winnerTeamName} won by ${runMargin} run${runMargin === 1 ? '' : 's'}`;
+      }
+
+      const lineupSize = state.lineups.filter(
+        (player) => player.season_team_id === state.match.winner_season_team_id,
+      ).length;
+      const wicketMargin = Math.max(lineupSize - 1 - winnerTotals.wickets, 0);
+      return wicketMargin > 0
+        ? `${winnerTeamName} won by ${wicketMargin} wicket${wicketMargin === 1 ? '' : 's'}`
+        : `${winnerTeamName} won`;
+    }
+
+    return `${winnerTeamName} won`;
   }
   return 'Match completed';
 }
@@ -66,6 +92,10 @@ function ScoreHero({
   const totals = getInningsTotals(innings);
   const battingTeamName = getTeamName(state, innings.batting_season_team_id);
   const bowlingTeamName = getTeamName(state, innings.bowling_season_team_id);
+  const bowlingTeamInnings = state.innings.find(
+    (teamInnings) => teamInnings.batting_season_team_id === innings.bowling_season_team_id,
+  );
+  const bowlingTeamTotals = bowlingTeamInnings ? getInningsTotals(bowlingTeamInnings) : null;
   const isLive = state.match.status === 'live';
 
   return (
@@ -84,6 +114,8 @@ function ScoreHero({
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-300">Batting</p>
             <h1 className="truncate text-lg font-black sm:text-2xl">{battingTeamName}</h1>
+            <p className="mt-1 text-xl font-black sm:text-2xl">{totals.runs}/{totals.wickets}</p>
+            <p className="text-[11px] font-semibold text-slate-400">{formatOvers(totals.legalBalls, innings.balls_per_over)} overs</p>
           </div>
         </div>
 
@@ -100,6 +132,10 @@ function ScoreHero({
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Bowling</p>
             <h2 className="truncate text-lg font-black sm:text-2xl">{bowlingTeamName}</h2>
+            {bowlingTeamTotals ? <>
+              <p className="mt-1 text-xl font-black sm:text-2xl">{bowlingTeamTotals.runs}/{bowlingTeamTotals.wickets}</p>
+              <p className="text-[11px] font-semibold text-slate-400">{formatOvers(bowlingTeamTotals.legalBalls, bowlingTeamInnings?.balls_per_over ?? innings.balls_per_over)} overs</p>
+            </> : <p className="mt-1 text-xs font-semibold text-slate-400">Yet to bat</p>}
           </div>
         </div>
       </div>
@@ -158,24 +194,44 @@ function CommentaryPanel({ state, innings }: { state: MatchScoringState; innings
   const [showAll, setShowAll] = useState(false);
   const commentary = getCommentary(state, innings);
   const visibleCommentary = showAll ? commentary : commentary.slice(0, commentaryPreviewSize);
+  const overGroups = [...visibleCommentary.reduce((groups, item) => {
+    const group = groups.get(item.overNumber) ?? [];
+    group.push(item);
+    groups.set(item.overNumber, group);
+    return groups;
+  }, new Map<number, typeof visibleCommentary>())].map(([overNumber, items]) => ({
+    overNumber,
+    items,
+    runs: items.reduce((total, item) => total + item.runs, 0),
+  }));
 
   return (
     <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <header className="border-b border-slate-200 px-4 py-4 dark:border-slate-800 sm:px-5">
         <h2 className="text-sm font-black uppercase tracking-[0.12em] text-slate-950 dark:text-white">Ball-by-ball</h2>
       </header>
-      {visibleCommentary.length > 0 ? (
-        <ol className="divide-y divide-slate-100 dark:divide-slate-800">
-          {visibleCommentary.map((item, index) => (
-            <li className={`grid grid-cols-[2.6rem_2.25rem_minmax(0,1fr)] items-start gap-2 px-4 py-3 text-sm sm:px-5 ${index === 0 ? 'bg-emerald-50/70 dark:bg-emerald-950/20' : ''}`} key={item.id}>
-              <strong className="pt-1 text-slate-950 dark:text-white">{item.ballLabel}</strong>
-              <span className={`flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-black ${item.tone === 'wicket' ? 'bg-rose-500 text-white' : item.tone === 'boundary' ? 'bg-amber-400 text-amber-950' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'}`}>
-                {item.badge}
-              </span>
-              <span className="pt-1 leading-5 text-slate-700 dark:text-slate-200">{item.description}</span>
-            </li>
+      {overGroups.length > 0 ? (
+        <div className="space-y-1 p-1.5">
+          {overGroups.map((group) => (
+            <section className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800" key={group.overNumber}>
+              <header className="flex items-center justify-between gap-3 bg-slate-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+                <span>Over {group.overNumber}</span>
+                <span>{group.runs} run{group.runs === 1 ? '' : 's'}</span>
+              </header>
+              <ol className="divide-y divide-slate-100 dark:divide-slate-800">
+                {group.items.map((item) => (
+                  <li className={`grid grid-cols-[2.6rem_2.25rem_minmax(0,1fr)] items-start gap-2 px-3 py-2.5 text-sm ${item.id === commentary[0]?.id ? 'bg-emerald-50/70 dark:bg-emerald-950/20' : ''}`} key={item.id}>
+                    <strong className="pt-1 text-slate-950 dark:text-white">{item.ballLabel}</strong>
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-black ${item.tone === 'wicket' ? 'bg-rose-500 text-white' : item.tone === 'boundary' ? 'bg-amber-400 text-amber-950' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'}`}>
+                      {item.badge}
+                    </span>
+                    <span className="pt-1 leading-5 text-slate-700 dark:text-slate-200">{item.description}</span>
+                  </li>
+                ))}
+              </ol>
+            </section>
           ))}
-        </ol>
+        </div>
       ) : (
         <p className="px-5 py-8 text-sm text-slate-500 dark:text-slate-400">Commentary will appear when scoring begins.</p>
       )}
