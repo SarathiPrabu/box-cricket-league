@@ -205,9 +205,45 @@ For database changes:
 
 ## Git
 
-Keep changes focused.
+Use one branch per unit of work. Never work directly on `main` or `master`.
+Keep the default branch stable and deployable, and require review before
+changes are merged into it.
 
-Do not mix unrelated refactoring with feature implementation.
+At the start of a new bug fix, UI improvement, feature, refactor, tooling
+change, or documentation change:
+
+Ensure the working tree is clean before running these commands. Stash or
+commit existing changes on the current branch first.
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b <branch-name>
+```
+
+Use these branch prefixes:
+
+* `fix/` for bug fixes, such as `fix/navbar-overflow`
+* `feature/` for new features, such as `feature/dark-mode`
+* `chore/` for refactors, tooling, and documentation, such as `chore/update-deps`
+
+Make changes in small, logical chunks and commit only related files. Use clear
+commit messages that describe the completed change:
+
+```bash
+git add <related-files>
+git commit -m "Fix navbar overflow on mobile screens"
+```
+
+Before sharing completed work, verify the branch and checks, then push the
+branch and open a pull request targeting `main`:
+
+```bash
+git push origin <branch-name>
+```
+
+Review the pull request and confirm CI/tests before merging. Do not push
+directly to `main`; merge only through the reviewed pull-request workflow.
 
 Before finishing a task, summarize:
 
