@@ -4,6 +4,7 @@
     --score-panel-soft: #f8fafc;
     --score-muted: #64748b;
     --score-green: var(--color-brand-600);
+    --score-red: #ef233c;
     color: #0f172a;
   }
 
@@ -18,64 +19,73 @@
   .score-match-header { padding: 0 0.1rem 0.35rem; }
   .score-match-header__top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .score-live-label { display: flex; align-items: center; gap: 0.55rem; color: var(--score-green); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.02em; }
-  .score-live-label span { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--score-green); }
+  .score-live-label span { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--score-red); }
   .score-format { color: var(--score-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
   .score-board { overflow: hidden; border-radius: 1.5rem; background: var(--score-panel); }
-  .score-board__main { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.35rem 1.25rem 1.15rem; }
-  .score-board__teams { display: flex; align-items: baseline; gap: 0.8rem; }
-  .score-board__teams strong { font-size: 2.3rem; line-height: 1; }
-  .score-board__teams span, .score-board__subline, .score-board__total span { color: var(--score-muted); }
-  .score-board__teams span { font-size: 1rem; font-weight: 600; }
-  .score-board__subline { margin-top: 0.65rem; font-size: 0.78rem; }
-  .score-board__total { text-align: right; }
-  .score-board__total strong { display: block; font-size: 3.25rem; line-height: 0.9; letter-spacing: -0.06em; }
-  .score-board__total span { display: block; margin-top: 0.45rem; font-size: 0.85rem; }
-  .score-board__metrics { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 1.25rem; border-top: 1px solid #34445d; padding: 1rem 0 1.25rem; }
-  .score-board__metrics div { display: grid; gap: 0.25rem; }
-  .score-board__metrics span { color: var(--score-muted); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; }
-  .score-board__metrics strong { font-size: 1rem; }
-  .score-board__metrics div:not(:first-child) { padding-left: 0.75rem; }
-  .score-board__metric--accent strong { color: var(--score-green); }
-  .score-player-card { overflow: hidden; border-radius: 1.35rem; background: var(--score-panel); }
-  .score-player-card__heading, .score-player-card__row { display: grid; grid-template-columns: minmax(0, 1fr) 2.5rem 2.5rem 3.25rem; align-items: center; gap: 0.4rem; padding: 0.75rem 1rem; }
-  .score-player-card__heading { color: var(--score-muted); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
-  .score-player-card__heading span:not(:first-child), .score-player-card__row > :not(:first-child) { text-align: right; }
-  .score-player-card__row { background: #ecf4f8; font-size: 0.95rem; }
-  .score-player-card__row > :not(:first-child) { color: var(--score-muted); }
-  .score-player-card__row strong:not(:first-child) { color: #0f172a; font-size: 1.1rem; }
-  .score-player-card__row strong:first-child { display: flex; min-width: 0; align-items: center; gap: 0.55rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .score-player-dot { width: 0.55rem; height: 0.55rem; flex: 0 0 auto; border-radius: 50%; background: var(--score-green); }
-  .score-player-card__bowler { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.8rem 1rem; background: var(--score-panel-soft); color: var(--score-muted); font-size: 0.72rem; font-weight: 800; text-transform: uppercase; }
-  .score-player-card__bowler strong { color: #0f172a; font-size: 0.9rem; text-transform: none; }
-  .score-keypad-label { margin-bottom: 0.85rem; color: var(--score-muted); font-size: 0.78rem; font-weight: 800; text-transform: uppercase; }
+  .score-board__scores { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; padding: 0.85rem 1rem; }
+  .score-board__score { min-width: 0; padding: 0.65rem 0.75rem; border: 1px solid transparent; border-radius: 0.75rem; }
+  .score-board__score--active { border-color: color-mix(in srgb, var(--score-green) 45%, transparent); background: color-mix(in srgb, var(--score-green) 8%, transparent); }
+  .score-board__score span, .score-board__score small { display: block; color: var(--score-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
+  .score-board__score strong { display: block; margin-top: 0.15rem; font-size: 1.55rem; line-height: 1; letter-spacing: -0.04em; }
+  .score-board__score small { margin-top: 0.35rem; font-size: 0.62rem; font-weight: 600; text-transform: none; }
+  .score-board__target { display: flex; align-items: baseline; gap: 0.45rem; margin: 0 1rem; border-top: 1px solid #cbd5e1; padding: 0.55rem 0 0.7rem; }
+  .score-board__target span { color: var(--score-muted); font-size: 0.62rem; font-weight: 800; text-transform: uppercase; }
+  .score-board__target strong { color: var(--score-green); font-size: 0.76rem; }
+  .delivery-strip { overflow: hidden; border: 1px solid #cbd5e1; border-radius: 1.15rem; background: var(--score-panel); padding: 0.8rem 1.25rem 1rem; }
+  .delivery-strip__heading { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; color: var(--score-muted); font-size: 0.68rem; font-weight: 800; text-transform: uppercase; }
+  .delivery-strip__heading strong { color: #0f172a; font-size: 0.78rem; }
+  .delivery-strip__track { display: flex; min-width: 0; gap: 0.45rem; margin-top: 0.65rem; overflow-x: auto; padding-bottom: 0.2rem; scrollbar-width: thin; }
+  .delivery-strip__item { display: inline-flex; min-width: 2rem; height: 2rem; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid #cbd5e1; border-radius: 0.35rem; background: #f1f5f9; color: #0f172a; font-size: 0.8rem; font-weight: 800; }
+  .delivery-strip__item:hover { border-color: var(--score-green); }
+  .delivery-strip__item--wicket { border-color: #7f1d1d; background: #7f1d1d; color: white; }
+  .delivery-strip__item--four { border-color: #16a34a; background: #16a34a; color: white; }
+  .delivery-strip__item--six { border-color: #7e22ce; background: #7e22ce; color: white; }
+  .delivery-strip__empty { color: var(--score-muted); font-size: 0.75rem; }
   .score-over-card { background: var(--score-panel-soft) !important; border-radius: 1.35rem !important; }
   .score-section-label { color: var(--score-muted); font-size: 0.78rem; font-weight: 800; text-transform: uppercase; }
-  .score-over-runs { color: #0f172a; font-size: 0.9rem; font-weight: 800; }
-  .score-over-balls { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; }
+  .score-person-line { display: flex; min-width: 0; align-items: baseline; gap: 0.45rem; }
+  .score-person-line__label { flex: 0 0 auto; color: var(--score-muted); font-size: 0.68rem; font-weight: 800; text-transform: uppercase; }
+  .score-person-line__name { min-width: 0; color: #0f172a; font-size: 0.8rem; font-weight: 800; }
+  .score-batter-line__balls { flex: 0 0 auto; color: var(--score-muted); font-size: 0.78rem; font-weight: 700; }
+  .score-over-balls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem; }
   .score-over-balls button { min-height: 3.1rem; padding: 0.4rem; border-radius: 50%; border-color: #cbd5e1; background: #ffffff !important; color: #0f172a !important; }
   .score-over-balls button:hover { background: #f1f5f9 !important; }
+  .score-over-balls .score-run-button--four { border-color: #16a34a !important; background: #16a34a !important; color: white !important; }
+  .score-over-balls .score-run-button--six { border-color: #7e22ce !important; background: #7e22ce !important; color: white !important; }
+  .score-event-buttons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; }
+  .score-event-buttons button { min-height: 3rem; }
+  .score-event-buttons .score-event-button--no-ball { border-color: #ef233c; background: #ef233c; color: white; }
+  .score-event-buttons .score-event-button--neutral { border-color: #cbd5e1; background: white; color: #0f172a; }
 
   .dark .score-page {
     --score-panel: #1d293d;
     --score-panel-soft: #111a2a;
     --score-muted: #91a1bb;
     --score-green: #08bf8a;
+    --score-red: #ff3b30;
     color: #f8fafc;
   }
 
   .dark .score-page .surface-card { border-color: #27364e; }
-  .dark .score-player-card__row { background: #1b3447; }
-  .dark .score-player-card__row strong:not(:first-child),
-  .dark .score-player-card__bowler strong,
-  .dark .score-over-runs { color: white; }
+  .dark .score-board__target { border-top-color: #34445d; }
+  .dark .delivery-strip { border-color: #34445d; }
+  .dark .delivery-strip__heading strong { color: white; }
+  .dark .delivery-strip__item { border-color: #34445d; background: #1d293d; color: white; }
+  .dark .delivery-strip__item--wicket { border-color: #7f1d1d; background: #7f1d1d; }
+  .dark .delivery-strip__item--four { border-color: #16a34a; background: #16a34a; }
+  .dark .delivery-strip__item--six { border-color: #7e22ce; background: #7e22ce; }
+  .dark .score-person-line__name { color: white; }
   .dark .score-over-balls button { border-color: #34445d; background: #1d293d !important; color: white !important; }
   .dark .score-over-balls button:hover { background: #27364e !important; }
+  .dark .score-over-balls .score-run-button--four { border-color: #16a34a !important; background: #16a34a !important; color: white !important; }
+  .dark .score-over-balls .score-run-button--six { border-color: #7e22ce !important; background: #7e22ce !important; color: white !important; }
+  .dark .score-event-buttons .score-event-button--no-ball { border-color: #ff3b30; background: #ff3b30; color: white; }
+  .dark .score-event-buttons .score-event-button--neutral { border-color: #cbd5e1; background: white; color: #0f172a; }
 
   @media (max-width: 480px) {
-    .score-board__teams strong { font-size: 2rem; }
-    .score-board__total strong { font-size: 2.8rem; }
-    .score-board__main { padding-inline: 1rem; }
-    .score-board__metrics { margin-inline: 1rem; }
+    .score-board__score strong { font-size: 1.4rem; }
+    .score-board__scores { gap: 0.35rem; padding-inline: 0.75rem; }
+    .score-board__target { margin-inline: 0.75rem; }
   }
 
   .form-select {
