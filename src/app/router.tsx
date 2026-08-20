@@ -5,6 +5,7 @@ import { TeamManagerAssignmentPage } from '../features/admin/TeamManagerAssignme
 import { LeaderboardsPage } from '../features/leaderboards/LeaderboardsPage';
 import { MatchesPage } from '../features/matches/MatchesPage';
 import { LiveMatchPage } from '../features/matches/LiveMatchPage';
+import { PublicLiveScorePage } from '../features/matches/PublicLiveScorePage';
 import { TeamSelectionPage } from '../features/matches/TeamSelectionPage';
 import { HomePage } from '../features/home/HomePage';
 import { PlayerDetailPage } from '../features/players/PlayerDetailPage';
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
       { path: 'teams', element: <TeamsPage /> },
       { path: 'teams/:slug', element: <TeamDetailPage /> },
       { path: 'matches', element: <MatchesPage /> },
+      { path: 'matches/:matchId', element: <PublicLiveScorePage /> },
       { path: 'matches/:matchId/live', element: <LiveMatchPage /> },
       { path: 'matches/:matchId/lineup', element: protectRoute('teamSelection', <TeamSelectionPage />) },
       { path: 'standings', element: <StandingsPage /> },

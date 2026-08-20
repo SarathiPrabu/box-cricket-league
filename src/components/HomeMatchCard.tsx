@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { TeamBadge } from './TeamBadge';
 import type { MatchCardData } from './MatchCard';
 
@@ -85,8 +86,10 @@ function TeamScore({
 export function HomeMatchCard({ match }: HomeMatchCardProps) {
   const homeIsWinner = match.result_type === 'win' && match.winner_team_name === match.home_team_name;
   const awayIsWinner = match.result_type === 'win' && match.winner_team_name === match.away_team_name;
+  const hasDetailedScore = match.home_runs !== null || match.away_runs !== null;
+  const canViewScore = match.status === 'live' || (match.status === 'completed' && hasDetailedScore);
 
-  return (
+  const card = (
     <article className="home-result-card">
       <header className="home-result-card__header">
         <span className={`home-result-card__status home-result-card__status--${match.status}`}>
@@ -117,4 +120,14 @@ export function HomeMatchCard({ match }: HomeMatchCardProps) {
       <footer className="home-result-card__result">{resultLabel(match)}</footer>
     </article>
   );
+
+  return canViewScore ? (
+    <Link
+      aria-label={`${match.status === 'live' ? 'View live score' : 'View scorecard'} for ${match.home_team_name} versus ${match.away_team_name}`}
+      className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+      to={`/matches/${match.match_id}`}
+    >
+      {card}
+    </Link>
+  ) : card;
 }
