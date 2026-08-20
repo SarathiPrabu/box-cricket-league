@@ -212,6 +212,9 @@ changes are merged into it.
 At the start of a new bug fix, UI improvement, feature, refactor, tooling
 change, or documentation change:
 
+Ensure the working tree is clean before running these commands. Stash or
+commit existing changes on the current branch first.
+
 ```bash
 git checkout main
 git pull origin main
