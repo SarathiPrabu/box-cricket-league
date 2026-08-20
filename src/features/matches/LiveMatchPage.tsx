@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { DeliveryStrip } from '../../components/DeliveryStrip';
 import { ScoreButton } from '../../components/ScoreButton';
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
 import type {
@@ -13,8 +14,8 @@ import type {
   ScoringOver,
 } from './liveMatchTypes';
 
-const LEGAL_RUNS = [0, 1, 2, 3, 4, 6] as const;
-const NO_BALL_BATTER_RUNS = [0, 1, 2, 4, 6] as const;
+const LEGAL_RUNS = [0, 1, 2, 4, 6] as const;
+const NO_BALL_BATTER_RUNS = [1, 2, 4, 6] as const;
 const DISMISSAL_OPTIONS: { value: DismissalType; label: string }[] = [
   { value: 'bowled', label: 'Bowled' },
   { value: 'caught', label: 'Caught' },
@@ -93,6 +94,12 @@ function formatOvers(legalBalls: number, ballsPerOver: number) {
   return `${Math.floor(legalBalls / ballsPerOver)}.${legalBalls % ballsPerOver}`;
 }
 
+function getTeamAbbreviation(teamName: string) {
+  const parts = teamName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return parts.map((part) => part[0] ?? '').join('').slice(0, 2).toUpperCase();
+}
+
 function getBowlerOverCount(innings: ScoringInnings, seasonRosterId: string) {
   return innings.overs.filter((over) => over.bowler_season_roster_id === seasonRosterId).length;
 }
@@ -107,34 +114,6 @@ function getDismissedIds(innings: ScoringInnings) {
 
 function getTeamPlayers(lineups: ScoringLineup[], seasonTeamId: string) {
   return lineups.filter((lineup) => lineup.season_team_id === seasonTeamId);
-}
-
-function getPlayerName(lineups: ScoringLineup[], playerId: string | null) {
-  return lineups.find((lineup) => lineup.season_roster_id === playerId)?.player_name ?? 'Unknown player';
-}
-
-function getDismissalLabel(dismissalType: RecordedDismissalType | null) {
-  if (dismissalType === 'run_out') return 'Run out (legacy)';
-  return DISMISSAL_OPTIONS.find((option) => option.value === dismissalType)?.label ?? dismissalType ?? '';
-}
-
-function formatDelivery(delivery: ScoringDelivery, lineups: ScoringLineup[]) {
-  const totalRuns = delivery.batter_runs + delivery.extra_runs;
-  const event = delivery.delivery_type === 'legal'
-    ? delivery.batter_runs === 0
-      ? 'Dot ball'
-      : `${delivery.batter_runs} off bat`
-    : delivery.delivery_type === 'wide'
-      ? `Wide +${delivery.extra_runs}`
-      : delivery.delivery_type === 'no_ball'
-        ? `No-ball +${delivery.extra_runs}${delivery.batter_runs ? ` + ${delivery.batter_runs} off bat` : ''} = ${totalRuns}`
-        : `Dead ball +${delivery.extra_runs}${delivery.batter_runs ? ` + ${delivery.batter_runs} off bat = ${totalRuns}` : ''}`;
-
-  const wicket = delivery.is_wicket
-    ? ` · ${getDismissalLabel(delivery.dismissal_type)} ${getPlayerName(lineups, delivery.dismissed_season_roster_id)}`
-    : '';
-
-  return `${delivery.legal_ball_number ? `${delivery.legal_ball_number}.` : 'Replay'} ${event}${wicket}`;
 }
 
 function MatchHeading({ state }: { state: MatchScoringState }) {
@@ -154,36 +133,47 @@ function MatchHeading({ state }: { state: MatchScoringState }) {
 
 function ScoreSummary({
   innings,
-  teamName,
+  homeInnings,
+  awayInnings,
+  homeTeamName,
+  awayTeamName,
 }: {
   innings: ScoringInnings;
-  teamName: string;
+  homeInnings: ScoringInnings | null;
+  awayInnings: ScoringInnings | null;
+  homeTeamName: string;
+  awayTeamName: string;
 }) {
   const score = getInningsScore(innings);
   const legalBalls = getInningsLegalBalls(innings);
-  const wickets = [...getDismissedIds(innings)].length;
   const runsRequired = innings.target_score === null ? null : Math.max(innings.target_score - score, 0);
+  const ballsRemaining = Math.max(innings.legal_balls_limit - legalBalls, 0);
   const targetReached = innings.target_score !== null && runsRequired === 0;
+  const teamScores = [
+    { innings: homeInnings, name: homeTeamName },
+    { innings: awayInnings, name: awayTeamName },
+  ];
 
   return (
     <section className="score-board sticky top-2 z-10">
-      <div className="score-board__main">
-        <div className="min-w-0">
-          <div className="score-board__teams">
-            <strong>{teamName.slice(0, 3).toUpperCase()}</strong>
-            <span>Innings {innings.innings_number}</span>
-          </div>
-          <p className="score-board__subline">{innings.target_score !== null ? `Target ${innings.target_score}` : 'Live scoring'}</p>
-        </div>
-        <div className="score-board__total">
-          <strong>{score}/{wickets}</strong>
-          <span>{formatOvers(legalBalls, innings.balls_per_over)} Overs</span>
-        </div>
+      <div className="score-board__scores">
+        {teamScores.map((team) => {
+          const teamScore = team.innings ? getInningsScore(team.innings) : 0;
+          const teamWickets = team.innings ? [...getDismissedIds(team.innings)].length : 0;
+          const teamBalls = team.innings ? getInningsLegalBalls(team.innings) : 0;
+          const isActive = team.innings?.id === innings.id;
+          return (
+            <div className={`score-board__score ${isActive ? 'score-board__score--active' : ''}`} key={team.name}>
+              <span>{getTeamAbbreviation(team.name)}</span>
+              <strong>{team.innings ? `${teamScore}/${teamWickets}` : '—/—'}</strong>
+              <small>{team.innings ? `${formatOvers(teamBalls, team.innings.balls_per_over)} Overs` : 'Not started'}</small>
+            </div>
+          );
+        })}
       </div>
-      <div className="score-board__metrics">
-        <div><span>Current RR</span><strong>{legalBalls ? (score / (legalBalls / 6)).toFixed(2) : '0.00'}</strong></div>
-        <div><span>Proj score</span><strong>{legalBalls ? Math.round(score / legalBalls * innings.legal_balls_limit) : '—'}</strong></div>
-        <div className="score-board__metric--accent"><span>{targetReached ? 'Status' : 'Runs required'}</span><strong>{targetReached ? 'Target reached' : runsRequired ?? '—'}</strong></div>
+      <div className="score-board__target">
+        <span>{targetReached ? 'Status' : 'Runs required'}</span>
+        <strong>{targetReached ? 'Target reached' : runsRequired !== null ? `${runsRequired} run${runsRequired === 1 ? '' : 's'} from ${ballsRemaining} ball${ballsRemaining === 1 ? '' : 's'}` : '—'}</strong>
       </div>
     </section>
   );
@@ -211,9 +201,8 @@ export function LiveMatchPage() {
   const [changingFlexibleBatter, setChangingFlexibleBatter] = useState(false);
   const [dismissalType, setDismissalType] = useState<DismissalType>('bowled');
   const [fielderId, setFielderId] = useState('');
-  const [stumpingPromptOpen, setStumpingPromptOpen] = useState(false);
+  const [scoringPrompt, setScoringPrompt] = useState<'no_ball' | 'wide' | 'dead_ball' | 'wicket' | null>(null);
   const [stumpingWicketkeeperId, setStumpingWicketkeeperId] = useState('');
-  const [stumpingDeliveryType, setStumpingDeliveryType] = useState<DeliveryType>('legal');
   const [editingDelivery, setEditingDelivery] = useState<EditDeliveryForm | null>(null);
 
   const loadState = useCallback(async () => {
@@ -429,8 +418,17 @@ export function LiveMatchPage() {
       if (!result) return;
     }
     setOverForm((current) => ({ ...current, wicketkeeperId: stumpingWicketkeeperId }));
-    setStumpingPromptOpen(false);
+    setScoringPrompt(null);
     await recordDelivery(deliveryType, batterRuns, extraRuns, true, 'stumped', stumpingWicketkeeperId);
+  }
+
+  function openScoringPrompt(prompt: 'no_ball' | 'wide' | 'dead_ball' | 'wicket') {
+    if (prompt === 'wicket') {
+      setDismissalType('bowled');
+      setFielderId('');
+      setStumpingWicketkeeperId(defaultStumpingWicketkeeperId);
+    }
+    setScoringPrompt(prompt);
   }
 
   async function completeInnings() {
@@ -519,6 +517,8 @@ export function LiveMatchPage() {
   const isCompleted = state.match.status === 'completed';
   const firstInnings = state.innings.find((innings) => innings.innings_number === 1);
   const secondInnings = state.innings.find((innings) => innings.innings_number === 2);
+  const homeInnings = state.innings.find((innings) => innings.batting_season_team_id === state.match.home_season_team_id) ?? null;
+  const awayInnings = state.innings.find((innings) => innings.batting_season_team_id === state.match.away_season_team_id) ?? null;
   const currentBattingPlayers = activeInnings ? getTeamPlayers(state.lineups, activeInnings.batting_season_team_id) : [];
   const currentBowlingPlayers = activeInnings ? getTeamPlayers(state.lineups, activeInnings.bowling_season_team_id) : [];
   const dismissed = activeInnings ? getDismissedIds(activeInnings) : new Set<string>();
@@ -635,46 +635,30 @@ export function LiveMatchPage() {
         </section>
       ) : null}
 
-      {activeInnings ? <ScoreSummary innings={activeInnings} teamName={activeInnings.batting_season_team_id === state.match.home_season_team_id ? state.match.home_team_name : state.match.away_team_name} /> : null}
-
-      {activeInnings && currentOver && activeBattingTurn ? (
-        <section className="score-player-card">
-          <div className="score-player-card__heading"><span>Batsman</span><span>R</span><span>B</span><span>SR</span></div>
-          <div className="score-player-card__row">
-            <strong><span aria-hidden="true" className="score-player-dot" />{activeBattingTurn.batter_name}</strong>
-            <strong>{activeInnings.overs.flatMap((over) => over.deliveries).filter((delivery) => delivery.striker_season_roster_id === activeBattingTurn.batter_season_roster_id).reduce((total, delivery) => total + delivery.batter_runs, 0)}</strong>
-            <span>({activeBattingTurn.legal_balls_faced})</span>
-            <span>{activeBattingTurn.legal_balls_faced ? (activeInnings.overs.flatMap((over) => over.deliveries).filter((delivery) => delivery.striker_season_roster_id === activeBattingTurn.batter_season_roster_id).reduce((total, delivery) => total + delivery.batter_runs, 0) / activeBattingTurn.legal_balls_faced * 100).toFixed(1) : '0.0'}</span>
-          </div>
-          <div className="score-player-card__bowler"><span>Bowler</span><strong>{currentOver.bowler_name}</strong><span>Over {currentOver.over_number}</span></div>
-        </section>
+      {activeInnings ? (
+        <ScoreSummary
+          awayInnings={awayInnings}
+          awayTeamName={state.match.away_team_name}
+          homeInnings={homeInnings}
+          homeTeamName={state.match.home_team_name}
+          innings={activeInnings}
+        />
       ) : null}
+
+      {currentOver ? <DeliveryStrip onDeliveryClick={beginEdit} over={currentOver} /> : null}
 
       {activeInnings && currentOver ? (
         <section className="score-over-card surface-card p-4">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <p className="score-section-label">This over · {currentOver.bowler_name}</p>
-              <h3 className="mt-1 text-base font-bold text-slate-950 dark:text-white">
-                {currentOver.bowler_name} bowling
-              </h3>
-            </div>
-            <p className="score-over-runs">Runs: {currentOver.deliveries.reduce((total, delivery) => total + delivery.batter_runs + delivery.extra_runs, 0)}</p>
+          <div className="score-person-line">
+            <span className="score-person-line__label">Bowler</span>
+            <strong className="score-person-line__name">{currentOver.bowler_name}</strong>
           </div>
 
           {activeBattingTurn ? (
-            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50 p-3 dark:border-brand-900 dark:bg-brand-950/30">
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-brand-700 dark:text-brand-300">
-                  {activeBattingTurn.phase === 'initial' ? 'Initial batting turn' : 'Preserved balls'}
-                </p>
-                <p className="truncate text-base font-black text-slate-950 dark:text-white">{activeBattingTurn.batter_name}</p>
-                <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  {activeBattingTurn.phase === 'initial'
-                    ? `${activeBattingTurn.legal_balls_faced}/6 legal balls`
-                    : 'Flexible batting phase'}
-                </p>
-              </div>
+            <div className="score-person-line mt-4">
+              <span className="score-person-line__label">Batsman</span>
+              <strong className="score-person-line__name min-w-0 truncate">{activeBattingTurn.batter_name}</strong>
+              <span className="score-batter-line__balls">{activeBattingTurn.legal_balls_faced} balls</span>
               {canChangeBatter ? (
                 <ScoreButton
                   className="min-h-9 shrink-0 px-3 py-1.5 text-xs"
@@ -690,7 +674,7 @@ export function LiveMatchPage() {
             </div>
           ) : null}
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4">
             <div>
               {/*<p className="score-keypad-label">Interactive scoring keypad</p>*/}
               <SectionLabel>Runs off bat</SectionLabel>
@@ -702,93 +686,24 @@ export function LiveMatchPage() {
                 ))}
               </div>
             </div>
-            <div>
-              <SectionLabel>No-ball · 1 extra + bat runs</SectionLabel>
-              <div className="score-over-balls">
-                {NO_BALL_BATTER_RUNS.map((runs) => (
-                  <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} key={runs} onClick={() => void recordDelivery('no_ball', runs, 1)} tone="accent">
-                    NB +{runs}
-                  </ScoreButton>
-                ))}
-              </div>
-            </div>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => void recordDelivery('wide', 0, 1)}>Wide +1</ScoreButton>
-            <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => void recordDelivery('dead_ball', 0, 1)}>Dead ball +1</ScoreButton>
+          <div className="score-event-buttons mt-4">
+            <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('no_ball')} tone="accent">NB</ScoreButton>
+            <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('wide')} tone="accent">WD</ScoreButton>
+            <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('dead_ball')} tone="accent">DB</ScoreButton>
+            <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || !canRecordWicket || currentOverComplete} onClick={() => openScoringPrompt('wicket')} tone="danger">Wk</ScoreButton>
           </div>
 
-          <div className="mt-4 rounded-xl border border-red-200 bg-red-50/70 p-3 dark:border-red-900 dark:bg-red-950/20">
-            <SectionLabel>Wicket</SectionLabel>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <SelectField
-                label="Dismissal"
-                onChange={(value) => setDismissalType(value as DismissalType)}
-                options={DISMISSAL_OPTIONS}
-                value={dismissalType}
-              />
-              {dismissalType === 'caught' ? (
-                <SelectField
-                  label="Fielder"
-                  onChange={setFielderId}
-                  options={currentBowlingPlayers.map((player) => ({ value: player.season_roster_id, label: player.player_name }))}
-                  value={fielderId}
-                />
-              ) : <div />}
-            </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || !canRecordWicket || currentOverComplete} onClick={() => {
-                if (dismissalType === 'stumped') {
-                  setStumpingDeliveryType('legal');
-                  setStumpingWicketkeeperId(defaultStumpingWicketkeeperId);
-                  setStumpingPromptOpen(true);
-                } else {
-                  void recordDelivery('legal', 0, 0, true);
-                }
-              }} tone="danger">
-                Record wicket
-              </ScoreButton>
-              <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || !canRecordWicket || currentOverComplete} onClick={() => {
-                setStumpingDeliveryType('wide');
-                setStumpingWicketkeeperId(defaultStumpingWicketkeeperId);
-                setStumpingPromptOpen(true);
-              }} tone="danger">
-                Wide + stumping
+          {currentOverComplete ? (
+            <div className="mt-4 rounded-xl border border-brand-200 bg-brand-50 p-3 dark:border-brand-900 dark:bg-brand-950/30">
+              <p className="text-sm font-bold text-slate-950 dark:text-white">Over {currentOver.over_number} is complete</p>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Review or edit deliveries from the score summary before locking this over.</p>
+              <ScoreButton className="mt-3 w-full" disabled={saving} onClick={() => void confirmOver()} tone="accent">
+                Confirm and lock over
               </ScoreButton>
             </div>
-          </div>
-
-          <div className="mt-4 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <SectionLabel>{currentOverComplete ? 'Review completed over' : 'Current over'}</SectionLabel>
-              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{getOverLegalBalls(currentOver)}/{activeInnings.balls_per_over} legal</span>
-            </div>
-            {currentOver.deliveries.length === 0 ? <p className="text-sm text-slate-600 dark:text-slate-300">No deliveries yet.</p> : null}
-            {currentOver.deliveries.map((delivery) => {
-              const canCorrectDelivery = !currentOver.confirmed_at;
-              return (
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-2.5 text-sm dark:bg-slate-950" key={delivery.id}>
-                  <span className="font-medium text-slate-800 dark:text-slate-200">{formatDelivery(delivery, state.lineups)}</span>
-                  <span className="flex gap-2">
-                    <ScoreButton className="min-h-8 px-2.5 py-1 text-xs" disabled={saving || !canCorrectDelivery} onClick={() => beginEdit(delivery)}>Edit</ScoreButton>
-                    <ScoreButton className="min-h-8 px-2.5 py-1 text-xs" disabled={saving || !canCorrectDelivery} onClick={() => void deleteDelivery(delivery.id)} tone="danger">Delete</ScoreButton>
-                  </span>
-                </div>
-              );
-            })}
-            {currentOverComplete ? (
-              <div className="rounded-xl border border-brand-200 bg-brand-50 p-3 dark:border-brand-900 dark:bg-brand-950/30">
-                <p className="text-sm font-bold text-slate-950 dark:text-white">Over {currentOver.over_number} is complete</p>
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                  Review or edit the deliveries above. Confirming locks this over and continues the match.
-                </p>
-                <ScoreButton className="mt-3 w-full" disabled={saving} onClick={() => void confirmOver()} tone="accent">
-                  Confirm and lock over
-                </ScoreButton>
-              </div>
-            ) : null}
-          </div>
+          ) : null}
         </section>
       ) : null}
 
@@ -894,31 +809,47 @@ export function LiveMatchPage() {
         </div>
       ) : null}
 
-      {stumpingPromptOpen && currentOver ? (
+      {scoringPrompt && currentOver ? (
         <div className="fixed inset-0 z-30 flex items-end justify-center bg-slate-950/50 p-3 sm:items-center">
-          <section aria-labelledby="stumping-prompt-title" aria-modal="true" className="w-full max-w-md rounded-2xl bg-white p-4 shadow-2xl dark:bg-slate-900 sm:p-5" role="dialog">
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-brand-600 dark:text-brand-400">Stumping</p>
-            <h3 className="mt-1 text-lg font-bold text-slate-950 dark:text-white" id="stumping-prompt-title">Choose the wicketkeeper</h3>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Select who should receive credit for this stumping.</p>
-            <div className="mt-4">
-              <SelectField
-                label="Wicketkeeper"
-                onChange={setStumpingWicketkeeperId}
-                options={keeperOptions.map((player) => ({ value: player.season_roster_id, label: player.player_name }))}
-                value={stumpingWicketkeeperId}
-              />
-            </div>
-            <div className="mt-4 flex gap-2">
-              <ScoreButton className="flex-1" disabled={saving || !stumpingWicketkeeperId || stumpingWicketkeeperId === currentOver?.bowler_season_roster_id} onClick={() => void recordStumping(stumpingDeliveryType, 0, stumpingDeliveryType === 'wide' ? 1 : 0)} tone="danger">Record stumping</ScoreButton>
-              <ScoreButton className="flex-1" disabled={saving} onClick={() => setStumpingPromptOpen(false)}>Cancel</ScoreButton>
-            </div>
+          <section aria-labelledby="scoring-prompt-title" aria-modal="true" className="w-full max-w-md rounded-2xl bg-white p-4 shadow-2xl dark:bg-slate-900 sm:p-5" role="dialog">
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-brand-600 dark:text-brand-400">Scoring prompt</p>
+            <h3 className="mt-1 text-lg font-bold text-slate-950 dark:text-white" id="scoring-prompt-title">
+              {scoringPrompt === 'no_ball' ? 'No ball' : scoringPrompt === 'wide' ? 'Wide' : scoringPrompt === 'dead_ball' ? 'Dead ball' : 'Wicket'}
+            </h3>
+            {scoringPrompt === 'no_ball' ? (
+              <>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Select runs scored off the bat. One no-ball extra run will be added.</p>
+                <div className="score-event-buttons mt-4">
+                  {NO_BALL_BATTER_RUNS.map((runs) => (
+                    <ScoreButton disabled={saving} key={runs} onClick={() => { setScoringPrompt(null); void recordDelivery('no_ball', runs, 1); }} tone={runs === 4 || runs === 6 ? 'accent' : 'default'}>{runs}</ScoreButton>
+                  ))}
+                </div>
+              </>
+            ) : null}
+            {scoringPrompt === 'wide' || scoringPrompt === 'dead_ball' ? (
+              <>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">One extra run will be added.</p>
+                <ScoreButton className="mt-4 w-full" disabled={saving} onClick={() => { const type = scoringPrompt; setScoringPrompt(null); void recordDelivery(type, 0, 1); }} tone="accent">Record +1</ScoreButton>
+              </>
+            ) : null}
+            {scoringPrompt === 'wicket' ? (
+              <>
+                <div className="mt-4 grid gap-3">
+                  <SelectField label="Dismissal" onChange={(value) => setDismissalType(value as DismissalType)} options={DISMISSAL_OPTIONS} value={dismissalType} />
+                  {dismissalType === 'caught' ? <SelectField label="Fielder" onChange={setFielderId} options={currentBowlingPlayers.map((player) => ({ value: player.season_roster_id, label: player.player_name }))} value={fielderId} /> : null}
+                  {dismissalType === 'stumped' ? <SelectField label="Wicketkeeper" onChange={setStumpingWicketkeeperId} options={keeperOptions.map((player) => ({ value: player.season_roster_id, label: player.player_name }))} value={stumpingWicketkeeperId} /> : null}
+                </div>
+                <ScoreButton className="mt-4 w-full" disabled={saving || (dismissalType === 'stumped' && !stumpingWicketkeeperId)} onClick={() => dismissalType === 'stumped' ? void recordStumping('legal') : (() => { setScoringPrompt(null); void recordDelivery('legal', 0, 0, true); })()} tone="danger">Record wicket</ScoreButton>
+              </>
+            ) : null}
+            <ScoreButton className="mt-2 w-full" disabled={saving} onClick={() => setScoringPrompt(null)}>Cancel</ScoreButton>
           </section>
         </div>
       ) : null}
 
       {editingDelivery ? (
         <div className="fixed inset-0 z-20 flex items-end justify-center bg-slate-950/50 p-3 sm:items-center">
-          <section className="w-full max-w-2xl rounded-2xl bg-white p-4 shadow-2xl dark:bg-slate-900 sm:p-5">
+          <section className="w-full max-w-md rounded-2xl bg-white p-4 shadow-2xl dark:bg-slate-900 sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-base font-bold text-slate-950 dark:text-white">Edit delivery</h3>
               <button className="text-xs font-bold text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white" onClick={() => setEditingDelivery(null)} type="button">Close</button>
@@ -953,6 +884,7 @@ export function LiveMatchPage() {
             ) : null}
             <div className="mt-4 flex flex-wrap gap-2">
               <ScoreButton disabled={saving} onClick={() => void saveDeliveryEdit()} tone="accent">Save delivery</ScoreButton>
+              <ScoreButton disabled={saving} onClick={() => { void deleteDelivery(editingDelivery.id).then(() => setEditingDelivery(null)); }} tone="danger">Delete delivery</ScoreButton>
               <ScoreButton disabled={saving} onClick={() => setEditingDelivery(null)}>Cancel</ScoreButton>
             </div>
           </section>
