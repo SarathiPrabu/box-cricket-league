@@ -201,8 +201,9 @@ export function LiveMatchPage() {
   const [changingFlexibleBatter, setChangingFlexibleBatter] = useState(false);
   const [dismissalType, setDismissalType] = useState<DismissalType>('bowled');
   const [fielderId, setFielderId] = useState('');
-  const [scoringPrompt, setScoringPrompt] = useState<'no_ball' | 'wide' | 'dead_ball' | 'wicket' | null>(null);
+  const [scoringPrompt, setScoringPrompt] = useState<'no_ball' | 'wicket' | null>(null);
   const [stumpingWicketkeeperId, setStumpingWicketkeeperId] = useState('');
+  const [stumpingWide, setStumpingWide] = useState(false);
   const [editingDelivery, setEditingDelivery] = useState<EditDeliveryForm | null>(null);
 
   const loadState = useCallback(async () => {
@@ -422,11 +423,12 @@ export function LiveMatchPage() {
     await recordDelivery(deliveryType, batterRuns, extraRuns, true, 'stumped', stumpingWicketkeeperId);
   }
 
-  function openScoringPrompt(prompt: 'no_ball' | 'wide' | 'dead_ball' | 'wicket') {
+  function openScoringPrompt(prompt: 'no_ball' | 'wicket') {
     if (prompt === 'wicket') {
       setDismissalType('bowled');
       setFielderId('');
       setStumpingWicketkeeperId(defaultStumpingWicketkeeperId);
+      setStumpingWide(false);
     }
     setScoringPrompt(prompt);
   }
@@ -690,8 +692,8 @@ export function LiveMatchPage() {
 
           <div className="score-event-buttons mt-4">
             <ScoreButton className="score-event-button--no-ball" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('no_ball')}>NB</ScoreButton>
-            <ScoreButton className="score-event-button--neutral" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('wide')}>WD</ScoreButton>
-            <ScoreButton className="score-event-button--neutral" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('dead_ball')}>DB</ScoreButton>
+            <ScoreButton className="score-event-button--neutral" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => void recordDelivery('wide', 0, 1)}>WD</ScoreButton>
+            <ScoreButton className="score-event-button--neutral" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => void recordDelivery('dead_ball', 0, 1)}>DB</ScoreButton>
             <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || !canRecordWicket || currentOverComplete} onClick={() => openScoringPrompt('wicket')} tone="danger">Wk</ScoreButton>
           </div>
 
@@ -814,7 +816,7 @@ export function LiveMatchPage() {
           <section aria-labelledby="scoring-prompt-title" aria-modal="true" className="w-full max-w-md rounded-2xl bg-white p-4 shadow-2xl dark:bg-slate-900 sm:p-5" role="dialog">
             <p className="text-[10px] font-black uppercase tracking-[0.14em] text-brand-600 dark:text-brand-400">Scoring prompt</p>
             <h3 className="mt-1 text-lg font-bold text-slate-950 dark:text-white" id="scoring-prompt-title">
-              {scoringPrompt === 'no_ball' ? 'No ball' : scoringPrompt === 'wide' ? 'Wide' : scoringPrompt === 'dead_ball' ? 'Dead ball' : 'Wicket'}
+              {scoringPrompt === 'no_ball' ? 'No ball' : 'Wicket'}
             </h3>
             {scoringPrompt === 'no_ball' ? (
               <>
@@ -826,20 +828,15 @@ export function LiveMatchPage() {
                 </div>
               </>
             ) : null}
-            {scoringPrompt === 'wide' || scoringPrompt === 'dead_ball' ? (
-              <>
-                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">One extra run will be added.</p>
-                <ScoreButton className="mt-4 w-full" disabled={saving} onClick={() => { const type = scoringPrompt; setScoringPrompt(null); void recordDelivery(type, 0, 1); }} tone="accent">Record +1</ScoreButton>
-              </>
-            ) : null}
             {scoringPrompt === 'wicket' ? (
               <>
                 <div className="mt-4 grid gap-3">
                   <SelectField label="Dismissal" onChange={(value) => setDismissalType(value as DismissalType)} options={DISMISSAL_OPTIONS} value={dismissalType} />
                   {dismissalType === 'caught' ? <SelectField label="Fielder" onChange={setFielderId} options={currentBowlingPlayers.map((player) => ({ value: player.season_roster_id, label: player.player_name }))} value={fielderId} /> : null}
                   {dismissalType === 'stumped' ? <SelectField label="Wicketkeeper" onChange={setStumpingWicketkeeperId} options={keeperOptions.map((player) => ({ value: player.season_roster_id, label: player.player_name }))} value={stumpingWicketkeeperId} /> : null}
+                  {dismissalType === 'stumped' ? <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200"><input checked={stumpingWide} onChange={(event) => setStumpingWide(event.target.checked)} type="checkbox" /> Wide</label> : null}
                 </div>
-                <ScoreButton className="mt-4 w-full" disabled={saving || (dismissalType === 'stumped' && !stumpingWicketkeeperId)} onClick={() => dismissalType === 'stumped' ? void recordStumping('legal') : (() => { setScoringPrompt(null); void recordDelivery('legal', 0, 0, true); })()} tone="danger">Record wicket</ScoreButton>
+                <ScoreButton className="mt-4 w-full" disabled={saving || (dismissalType === 'stumped' && !stumpingWicketkeeperId)} onClick={() => dismissalType === 'stumped' ? void recordStumping(stumpingWide ? 'wide' : 'legal', 0, stumpingWide ? 1 : 0) : (() => { setScoringPrompt(null); void recordDelivery('legal', 0, 0, true); })()} tone="danger">Record wicket</ScoreButton>
               </>
             ) : null}
             <ScoreButton className="mt-2 w-full" disabled={saving} onClick={() => setScoringPrompt(null)}>Cancel</ScoreButton>
