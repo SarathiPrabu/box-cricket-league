@@ -47,11 +47,15 @@
   .score-person-line__label { flex: 0 0 auto; color: var(--score-muted); font-size: 0.68rem; font-weight: 800; text-transform: uppercase; }
   .score-person-line__name { min-width: 0; color: #0f172a; font-size: 0.8rem; font-weight: 800; }
   .score-batter-line__balls { flex: 0 0 auto; color: var(--score-muted); font-size: 0.78rem; font-weight: 700; }
-  .score-over-balls { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; }
+  .score-over-balls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem; }
   .score-over-balls button { min-height: 3.1rem; padding: 0.4rem; border-radius: 50%; border-color: #cbd5e1; background: #ffffff !important; color: #0f172a !important; }
   .score-over-balls button:hover { background: #f1f5f9 !important; }
+  .score-over-balls .score-run-button--four { border-color: #16a34a !important; background: #16a34a !important; color: white !important; }
+  .score-over-balls .score-run-button--six { border-color: #7e22ce !important; background: #7e22ce !important; color: white !important; }
   .score-event-buttons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; }
   .score-event-buttons button { min-height: 3rem; }
+  .score-event-buttons .score-event-button--no-ball { border-color: #ef233c; background: #ef233c; color: white; }
+  .score-event-buttons .score-event-button--neutral { border-color: #cbd5e1; background: white; color: #0f172a; }
 
   .dark .score-page {
     --score-panel: #1d293d;
@@ -73,6 +77,10 @@
   .dark .score-person-line__name { color: white; }
   .dark .score-over-balls button { border-color: #34445d; background: #1d293d !important; color: white !important; }
   .dark .score-over-balls button:hover { background: #27364e !important; }
+  .dark .score-over-balls .score-run-button--four { border-color: #16a34a !important; background: #16a34a !important; color: white !important; }
+  .dark .score-over-balls .score-run-button--six { border-color: #7e22ce !important; background: #7e22ce !important; color: white !important; }
+  .dark .score-event-buttons .score-event-button--no-ball { border-color: #ff3b30; background: #ff3b30; color: white; }
+  .dark .score-event-buttons .score-event-button--neutral { border-color: #cbd5e1; background: white; color: #0f172a; }
 
   @media (max-width: 480px) {
     .score-board__score strong { font-size: 1.4rem; }

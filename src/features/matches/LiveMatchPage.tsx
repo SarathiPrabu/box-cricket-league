@@ -680,7 +680,7 @@ export function LiveMatchPage() {
               <SectionLabel>Runs off bat</SectionLabel>
               <div className="score-over-balls">
                 {LEGAL_RUNS.map((runs) => (
-                  <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} key={runs} onClick={() => void recordDelivery('legal', runs)} tone={runs === 4 || runs === 6 ? 'accent' : 'default'}>
+                  <ScoreButton className={runs === 4 ? 'score-run-button--four' : runs === 6 ? 'score-run-button--six' : ''} disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} key={runs} onClick={() => void recordDelivery('legal', runs)}>
                     {runs}
                   </ScoreButton>
                 ))}
@@ -689,9 +689,9 @@ export function LiveMatchPage() {
           </div>
 
           <div className="score-event-buttons mt-4">
-            <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('no_ball')} tone="accent">NB</ScoreButton>
-            <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('wide')} tone="accent">WD</ScoreButton>
-            <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('dead_ball')} tone="accent">DB</ScoreButton>
+            <ScoreButton className="score-event-button--no-ball" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('no_ball')}>NB</ScoreButton>
+            <ScoreButton className="score-event-button--neutral" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('wide')}>WD</ScoreButton>
+            <ScoreButton className="score-event-button--neutral" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('dead_ball')}>DB</ScoreButton>
             <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || !canRecordWicket || currentOverComplete} onClick={() => openScoringPrompt('wicket')} tone="danger">Wk</ScoreButton>
           </div>
 
@@ -821,7 +821,7 @@ export function LiveMatchPage() {
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Select runs scored off the bat. One no-ball extra run will be added.</p>
                 <div className="score-event-buttons mt-4">
                   {NO_BALL_BATTER_RUNS.map((runs) => (
-                    <ScoreButton disabled={saving} key={runs} onClick={() => { setScoringPrompt(null); void recordDelivery('no_ball', runs, 1); }} tone={runs === 4 || runs === 6 ? 'accent' : 'default'}>{runs}</ScoreButton>
+                    <ScoreButton className={runs === 4 ? 'score-run-button--four' : runs === 6 ? 'score-run-button--six' : ''} disabled={saving} key={runs} onClick={() => { setScoringPrompt(null); void recordDelivery('no_ball', runs, 1); }}>{runs}</ScoreButton>
                   ))}
                 </div>
               </>
