@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { SeasonSelector } from '../../components/SeasonSelector';
 import { useAuth } from '../auth/authState';
 import { hasRoleForLeague } from '../../app/routeAuthorization';
@@ -10,6 +10,11 @@ import { MatchCard, type MatchCardData } from '../../components/MatchCard';
 const leagueSlug = 'box-cricket-league';
 const communityPark = 'Community Park';
 const noDateGroupKey = 'no-date';
+
+function parsePage(value: string | null) {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
 
 type Season = {
   league_id: string;
@@ -97,6 +102,8 @@ function MatchPagination({ pageCount, currentPage, onPageChange }: MatchPaginati
 
 export function MatchesPage() {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [seasons, setSeasons] = useState<Season[] | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -110,9 +117,11 @@ export function MatchesPage() {
   const [editingHomeTeamId, setEditingHomeTeamId] = useState('');
   const [editingAwayTeamId, setEditingAwayTeamId] = useState('');
   const [editingMatchDate, setEditingMatchDate] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
 
   const requestedSeason = searchParams.get('season');
+  const requestedPage = searchParams.get('page');
+  const requestedMatchId = location.hash.startsWith('#match-') ? location.hash.slice('#match-'.length) : null;
+  const currentPage = parsePage(requestedPage);
   const selectedSeason = useMemo(() => {
     if (!seasons?.length) return null;
     return seasons.find((season) => seasonSlug(season.season_name) === requestedSeason) ?? seasons.find((season) => season.is_current) ?? seasons[0];
@@ -144,11 +153,22 @@ export function MatchesPage() {
   const activeDateGroup = matchDateGroups[activePageIndex];
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedSeason?.season_id]);
+    if (pageCount > 0 && currentPage > pageCount) {
+      const nextSearchParams = new URLSearchParams(searchParams);
+      nextSearchParams.set('page', String(pageCount));
+      setSearchParams(nextSearchParams, { replace: true });
+    }
+  }, [currentPage, pageCount, searchParams, setSearchParams]);
   useEffect(() => {
-    if (pageCount > 0 && currentPage > pageCount) setCurrentPage(pageCount);
-  }, [currentPage, pageCount]);
+    if (!requestedMatchId || !activeDateGroup?.matches.some((match) => match.match_id === requestedMatchId)) return;
+    document.getElementById(`match-${requestedMatchId}`)?.scrollIntoView({ block: 'start' });
+  }, [activeDateGroup, requestedMatchId]);
+
+  function changePage(page: number) {
+    const nextSearchParams = new URLSearchParams(searchParams);
+    nextSearchParams.set('page', String(page));
+    setSearchParams(nextSearchParams);
+  }
 
   const loadSeasons = useCallback(async () => {
     if (!supabase || !isSupabaseConfigured) {
@@ -179,8 +199,12 @@ export function MatchesPage() {
   useEffect(() => {
     if (!selectedSeason) return;
     const slug = seasonSlug(selectedSeason.season_name);
-    if (requestedSeason !== slug) setSearchParams({ season: slug }, { replace: true });
-  }, [requestedSeason, selectedSeason, setSearchParams]);
+    if (requestedSeason !== slug) {
+      const nextSearchParams = new URLSearchParams(searchParams);
+      nextSearchParams.set('season', slug);
+      navigate({ search: `?${nextSearchParams.toString()}`, hash: location.hash }, { replace: true });
+    }
+  }, [location.hash, navigate, requestedSeason, searchParams, selectedSeason]);
   useEffect(() => {
     if (selectedSeason) void loadSeasonData(selectedSeason);
   }, [loadSeasonData, selectedSeason]);
@@ -280,14 +304,14 @@ export function MatchesPage() {
       {selectedSeason && (matches === null ? <p className="mt-6 text-sm text-slate-600 dark:text-slate-300">Loading matches...</p> : matches.length === 0 ? <p className="mt-6 rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">No published matches for this season yet.</p> : <>
         <div className="mt-6">
           <h3 className="text-lg font-semibold text-slate-950 dark:text-white">{formatMatchDay(activeDateGroup?.dateKey ?? null)}</h3>
-          <MatchPagination pageCount={pageCount} currentPage={activePageIndex + 1} onPageChange={setCurrentPage} />
+          <MatchPagination pageCount={pageCount} currentPage={activePageIndex + 1} onPageChange={changePage} />
           <ul className="mt-3 grid gap-3">{activeDateGroup?.matches.map((match) => {
             const canEdit = isAdmin && match.status === 'scheduled';
             const isEditing = editingMatchId === match.match_id;
 
-            return <MatchCard key={match.match_id} canEdit={canEdit} isEditing={isEditing} match={match} onEditToggle={canEdit ? () => isEditing ? setEditingMatchId(null) : startEditing(match) : undefined}>
+            return <MatchCard id={`match-${match.match_id}`} key={match.match_id} canEdit={canEdit} isEditing={isEditing} match={match} onEditToggle={canEdit ? () => isEditing ? setEditingMatchId(null) : startEditing(match) : undefined}>
               {isAdmin && match.status === 'draft' ? <div className="border-t border-slate-200 p-4 dark:border-slate-800"><button type="button" onClick={() => void publishMatch(match.match_id)} className="min-h-10 rounded-md bg-brand-500 px-3 text-sm font-semibold text-slate-950">Publish draft</button></div> : null}
-              {canManageSelection && match.status === 'scheduled' ? <div className="border-t border-slate-200 p-4 dark:border-slate-800"><Link className="inline-flex min-h-10 items-center rounded-md border border-brand-500 px-3 py-2 text-sm font-semibold text-brand-800 dark:text-brand-300" to={`/matches/${match.match_id}/lineup`}>{isAdmin ? 'Manage team lineups' : 'Select playing team'}</Link></div> : null}
+              {canManageSelection && match.status === 'scheduled' ? <div className="border-t border-slate-200 p-4 dark:border-slate-800"><Link className="inline-flex min-h-10 items-center rounded-md border border-brand-500 px-3 py-2 text-sm font-semibold text-brand-800 dark:text-brand-300" to={`/matches/${match.match_id}/lineup?${new URLSearchParams({ ...(requestedSeason ? { season: requestedSeason } : {}), page: String(activePageIndex + 1) })}#match-${match.match_id}`}>{isAdmin ? 'Manage team lineups' : 'Select playing team'}</Link></div> : null}
               {match.status === 'scheduled' ? <div className="border-t border-slate-200 p-4 dark:border-slate-800"><Link className="inline-flex min-h-10 items-center rounded-md bg-brand-500 px-3 py-2 text-sm font-semibold text-slate-950" to={`/matches/${match.match_id}/live`}>Start live match</Link></div> : null}
               {match.status === 'live' ? <div className="border-t border-slate-200 p-4 dark:border-slate-800"><Link className="inline-flex min-h-10 items-center rounded-md bg-brand-500 px-3 py-2 text-sm font-semibold text-slate-950" to={`/matches/${match.match_id}/live`}>Open scorer</Link></div> : null}
               {isEditing ? <form className="border-t border-slate-200 p-4 dark:border-slate-800" onSubmit={(event) => { event.preventDefault(); void updateMatch(match.match_id); }}>
@@ -302,7 +326,7 @@ export function MatchesPage() {
             </MatchCard>;
           })}</ul>
         </div>
-        <MatchPagination pageCount={pageCount} currentPage={activePageIndex + 1} onPageChange={setCurrentPage} />
+        <MatchPagination pageCount={pageCount} currentPage={activePageIndex + 1} onPageChange={changePage} />
       </>)}
     </section>
   );

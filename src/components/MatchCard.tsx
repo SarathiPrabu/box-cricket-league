@@ -14,6 +14,7 @@ export type MatchCardData = {
 
 type MatchCardProps = {
   match: MatchCardData;
+  id?: string;
   canEdit?: boolean;
   isEditing?: boolean;
   onEditToggle?: () => void;
@@ -77,11 +78,11 @@ function MatchCardContent({ match, canEdit, isEditing }: Pick<MatchCardProps, 'm
   );
 }
 
-export function MatchCard({ match, canEdit = false, isEditing = false, onEditToggle, children }: MatchCardProps) {
+export function MatchCard({ match, id, canEdit = false, isEditing = false, onEditToggle, children }: MatchCardProps) {
   const content = <MatchCardContent canEdit={canEdit} isEditing={isEditing} match={match} />;
 
   return (
-    <li className="match-card">
+    <li id={id} className="match-card scroll-mt-4">
       {canEdit && onEditToggle ? (
         <button type="button" aria-expanded={isEditing} onClick={onEditToggle} className="block w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500">
           {content}

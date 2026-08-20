@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../../lib/supabase';
 
 type SelectionPlayer = {
@@ -47,6 +47,9 @@ function formatMatchDate(value: string | null) {
 
 export function TeamSelectionPage() {
   const { matchId } = useParams();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const matchesSearch = `${searchParams.toString() ? `?${searchParams.toString()}` : ''}${location.hash}`;
   const [state, setState] = useState<PageState>({ status: 'loading' });
   const [selectedByTeam, setSelectedByTeam] = useState<Record<string, string[]>>({});
   const [captainByTeam, setCaptainByTeam] = useState<Record<string, string | null>>({});
@@ -157,7 +160,7 @@ export function TeamSelectionPage() {
   if (state.status === 'error') {
     return (
       <section>
-        <Link className="text-sm font-semibold text-brand-700 hover:underline dark:text-brand-300" to="/matches">← Back to matches</Link>
+        <Link className="text-sm font-semibold text-brand-700 hover:underline dark:text-brand-300" to={`/matches${matchesSearch}`}>← Back to matches</Link>
         <h2 className="mt-6 text-2xl font-semibold text-slate-950 sm:text-3xl dark:text-white">Unable to load team selection</h2>
         <p className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300" role="alert">{state.message}</p>
         <button type="button" onClick={() => void loadState()} className="mt-4 rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-slate-950">Retry</button>
@@ -170,7 +173,7 @@ export function TeamSelectionPage() {
 
   return (
     <section className="space-y-6">
-      <Link className="text-sm font-semibold text-brand-700 hover:underline dark:text-brand-300" to="/matches">← Back to matches</Link>
+      <Link className="text-sm font-semibold text-brand-700 hover:underline dark:text-brand-300" to={`/matches${matchesSearch}`}>← Back to matches</Link>
 
       <header className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
