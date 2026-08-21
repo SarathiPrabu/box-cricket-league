@@ -99,50 +99,50 @@ function ScoreHero({
   const isLive = state.match.status === 'live';
 
   return (
-    <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 text-white shadow-xl shadow-slate-950/15">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3 sm:px-6">
-        <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${isLive ? 'bg-emerald-400 text-emerald-950' : 'bg-white/10 text-slate-200'}`}>
-          {isLive ? <span aria-hidden="true" className="h-2 w-2 animate-pulse rounded-full bg-emerald-950" /> : null}
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-sm dark:border-slate-800 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950 dark:text-white dark:shadow-xl dark:shadow-slate-950/15">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-4 py-3 dark:border-white/10 sm:px-6">
+        <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${isLive ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-400 dark:text-emerald-950' : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-200'}`}>
+          {isLive ? <span aria-hidden="true" className="h-2 w-2 animate-pulse rounded-full bg-emerald-600 dark:bg-emerald-950" /> : null}
           {isLive ? 'Live' : 'Result'}
         </span>
-        <span className="text-xs font-semibold text-slate-300">{state.match.venue || 'Venue to be confirmed'}</span>
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-300">{state.match.venue || 'Venue to be confirmed'}</span>
       </header>
 
       <div className="grid items-center gap-5 px-4 py-6 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:px-6 sm:py-8">
         <div className="flex min-w-0 items-center justify-center gap-3 text-center sm:justify-start sm:text-left">
           <TeamBadge teamName={battingTeamName} />
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-300">Batting</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">Batting</p>
             <h1 className="truncate text-lg font-black sm:text-2xl">{battingTeamName}</h1>
             <p className="mt-1 text-xl font-black sm:text-2xl">{totals.runs}/{totals.wickets}</p>
-            <p className="text-[11px] font-semibold text-slate-400">{formatOvers(totals.legalBalls, innings.balls_per_over)} overs</p>
+            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{formatOvers(totals.legalBalls, innings.balls_per_over)} overs</p>
           </div>
         </div>
 
         <div aria-live="polite" className="text-center">
           <p className="text-5xl font-black tracking-[-0.06em] sm:text-6xl">{totals.runs}/{totals.wickets}</p>
-          <p className="mt-1 text-sm font-bold text-slate-300">
+          <p className="mt-1 text-sm font-bold text-slate-500 dark:text-slate-300">
             {formatOvers(totals.legalBalls, innings.balls_per_over)} overs
           </p>
-          <p className="mt-2 text-sm font-extrabold text-emerald-300">{getMatchSituation(state, innings)}</p>
+          <p className="mt-2 text-sm font-extrabold text-emerald-700 dark:text-emerald-300">{getMatchSituation(state, innings)}</p>
         </div>
 
         <div className="flex min-w-0 items-center justify-center gap-3 text-center sm:flex-row-reverse sm:justify-start sm:text-right">
           <TeamBadge teamName={bowlingTeamName} />
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Bowling</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">Bowling</p>
             <h2 className="truncate text-lg font-black sm:text-2xl">{bowlingTeamName}</h2>
             {bowlingTeamTotals ? <>
               <p className="mt-1 text-xl font-black sm:text-2xl">{bowlingTeamTotals.runs}/{bowlingTeamTotals.wickets}</p>
-              <p className="text-[11px] font-semibold text-slate-400">{formatOvers(bowlingTeamTotals.legalBalls, bowlingTeamInnings?.balls_per_over ?? innings.balls_per_over)} overs</p>
-            </> : <p className="mt-1 text-xs font-semibold text-slate-400">Yet to bat</p>}
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{formatOvers(bowlingTeamTotals.legalBalls, bowlingTeamInnings?.balls_per_over ?? innings.balls_per_over)} overs</p>
+            </> : <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Yet to bat</p>}
           </div>
         </div>
       </div>
 
-      <div className="grid border-t border-white/10 bg-black/15 md:grid-cols-[1.4fr_1fr]">
-        <div className="border-b border-white/10 px-4 py-4 md:border-b-0 md:border-r sm:px-6">
-          <div className="grid grid-cols-[minmax(0,1fr)_2rem_2rem_2rem_2rem_3rem] gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400 sm:grid-cols-[minmax(0,1fr)_2.5rem_2.5rem_2.5rem_2.5rem_3.5rem]">
+      <div className="grid border-t border-slate-200 bg-slate-50 md:grid-cols-[1.4fr_1fr] dark:border-white/10 dark:bg-black/15">
+        <div className="border-b border-slate-200 px-4 py-4 md:border-b-0 md:border-r sm:px-6 dark:border-white/10">
+          <div className="grid grid-cols-[minmax(0,1fr)_2rem_2rem_2rem_2rem_3rem] gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 sm:grid-cols-[minmax(0,1fr)_2.5rem_2.5rem_2.5rem_2.5rem_3.5rem]">
             <span>{isLive ? 'Current' : 'Not out'} batter{currentBatters.length === 1 ? '' : 's'}</span>
             <span className="text-right">R</span>
             <span className="text-right">B</span>
@@ -157,16 +157,16 @@ function ScoreHero({
                 <span className="truncate">{batter.name}{batter.isCaptain ? ' (c)' : ''}</span>
               </strong>
               <strong className="text-right">{batter.runs}</strong>
-              <span className="text-right text-slate-300">{batter.balls}</span>
-              <span className="text-right text-slate-300">{batter.fours}</span>
-              <span className="text-right text-slate-300">{batter.sixes}</span>
-              <span className="text-right text-slate-300">{batter.strikeRate.toFixed(1)}</span>
+              <span className="text-right text-slate-500 dark:text-slate-300">{batter.balls}</span>
+              <span className="text-right text-slate-500 dark:text-slate-300">{batter.fours}</span>
+              <span className="text-right text-slate-500 dark:text-slate-300">{batter.sixes}</span>
+              <span className="text-right text-slate-500 dark:text-slate-300">{batter.strikeRate.toFixed(1)}</span>
             </div>
           )) : <p className="mt-2 text-sm font-semibold text-slate-300">Innings complete</p>}
         </div>
 
         <div className="px-4 py-4 sm:px-6">
-          <div className="grid grid-cols-[minmax(0,1fr)_2rem_2rem_2rem_2rem_3rem] gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400 sm:grid-cols-[minmax(0,1fr)_2.5rem_2.5rem_2.5rem_2.5rem_3.5rem]">
+          <div className="grid grid-cols-[minmax(0,1fr)_2rem_2rem_2rem_2rem_3rem] gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 sm:grid-cols-[minmax(0,1fr)_2.5rem_2.5rem_2.5rem_2.5rem_3.5rem]">
             <span>{isLive ? 'Bowler' : 'Last bowler'}</span>
             <span className="text-right">O</span>
             <span className="text-right">M</span>
@@ -178,10 +178,10 @@ function ScoreHero({
             <div className="mt-2 grid grid-cols-[minmax(0,1fr)_2rem_2rem_2rem_2rem_3rem] items-center gap-1 text-sm sm:grid-cols-[minmax(0,1fr)_2.5rem_2.5rem_2.5rem_2.5rem_3.5rem]">
               <strong className="truncate">{currentBowler.name}</strong>
               <span className="text-right">{formatOvers(currentBowler.legalBalls, innings.balls_per_over)}</span>
-              <span className="text-right text-slate-300">{currentBowler.maidens}</span>
-              <span className="text-right text-slate-300">{currentBowler.runs}</span>
-              <strong className="text-right text-rose-400">{currentBowler.wickets}</strong>
-              <span className="text-right text-slate-300">{currentBowler.economy.toFixed(2)}</span>
+              <span className="text-right text-slate-500 dark:text-slate-300">{currentBowler.maidens}</span>
+              <span className="text-right text-slate-500 dark:text-slate-300">{currentBowler.runs}</span>
+              <strong className="text-right text-rose-600 dark:text-rose-400">{currentBowler.wickets}</strong>
+              <span className="text-right text-slate-500 dark:text-slate-300">{currentBowler.economy.toFixed(2)}</span>
             </div>
           ) : <p className="mt-2 text-sm font-semibold text-slate-300">Bowler not assigned</p>}
         </div>
@@ -193,6 +193,8 @@ function ScoreHero({
 function CommentaryPanel({ state, innings }: { state: MatchScoringState; innings: ScoringInnings }) {
   const [showAll, setShowAll] = useState(false);
   const commentary = getCommentary(state, innings);
+  const battingScorecard = getBattingScorecard(state, innings);
+  const batterById = new Map(battingScorecard.map((batter) => [batter.playerId, batter]));
   const visibleCommentary = showAll ? commentary : commentary.slice(0, commentaryPreviewSize);
   const overGroups = [...visibleCommentary.reduce((groups, item) => {
     const group = groups.get(item.overNumber) ?? [];
@@ -203,6 +205,7 @@ function CommentaryPanel({ state, innings }: { state: MatchScoringState; innings
     overNumber,
     items,
     runs: items.reduce((total, item) => total + item.runs, 0),
+    wickets: items.filter((item) => item.tone === 'wicket').length,
   }));
 
   return (
@@ -216,7 +219,7 @@ function CommentaryPanel({ state, innings }: { state: MatchScoringState; innings
             <section className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800" key={group.overNumber}>
               <header className="flex items-center justify-between gap-3 bg-slate-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500 dark:bg-slate-950 dark:text-slate-400">
                 <span>Over {group.overNumber}</span>
-                <span>{group.runs} run{group.runs === 1 ? '' : 's'}</span>
+                <span>{group.runs} run{group.runs === 1 ? '' : 's'} · {group.wickets} wicket{group.wickets === 1 ? '' : 's'}</span>
               </header>
               <ol className="divide-y divide-slate-100 dark:divide-slate-800">
                 {group.items.map((item) => (
@@ -225,7 +228,14 @@ function CommentaryPanel({ state, innings }: { state: MatchScoringState; innings
                     <span className={`flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-black ${item.tone === 'wicket' ? 'bg-rose-500 text-white' : item.tone === 'boundary' ? 'bg-amber-400 text-amber-950' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100'}`}>
                       {item.badge}
                     </span>
-                    <span className="pt-1 leading-5 text-slate-700 dark:text-slate-200">{item.description}</span>
+                    <div className="min-w-0 pt-1">
+                      <p className="leading-5 text-slate-700 dark:text-slate-200">{item.description}</p>
+                      {item.tone === 'wicket' && batterById.get(item.batterId) ? (
+                        <p className="mt-1 inline-block max-w-full rounded bg-slate-100 px-2 py-1 text-[11px] font-bold leading-4 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                          {batterById.get(item.batterId)?.name} {batterById.get(item.batterId)?.runs} ({batterById.get(item.batterId)?.balls}b) · SR: {batterById.get(item.batterId)?.strikeRate.toFixed(1)}
+                        </p>
+                      ) : null}
+                    </div>
                   </li>
                 ))}
               </ol>
@@ -237,7 +247,7 @@ function CommentaryPanel({ state, innings }: { state: MatchScoringState; innings
       )}
       {commentary.length > commentaryPreviewSize ? (
         <button className="min-h-11 w-full border-t border-slate-200 px-4 text-sm font-bold text-emerald-700 hover:bg-slate-50 dark:border-slate-800 dark:text-emerald-300 dark:hover:bg-slate-800" onClick={() => setShowAll((current) => !current)} type="button">
-          {showAll ? 'Show latest only' : `View all ${commentary.length} deliveries`}
+          {showAll ? 'Show latest only' : `View all`}
         </button>
       ) : null}
     </section>

@@ -199,6 +199,7 @@ export function LiveMatchPage() {
   });
   const [nextBatterId, setNextBatterId] = useState('');
   const [changingFlexibleBatter, setChangingFlexibleBatter] = useState(false);
+  const [changingBowler, setChangingBowler] = useState(false);
   const [dismissalType, setDismissalType] = useState<DismissalType>('bowled');
   const [fielderId, setFielderId] = useState('');
   const [scoringPrompt, setScoringPrompt] = useState<'no_ball' | 'wide' | 'dead_ball' | 'wicket' | null>(null);
@@ -332,12 +333,13 @@ export function LiveMatchPage() {
       setError('Choose the bowler.');
       return;
     }
-    await runAction('set_match_over_assignment', {
+    const result = await runAction('set_match_over_assignment', {
       target_innings_id: activeInnings.id,
       target_over_number: nextOverNumber,
       target_bowler_season_roster_id: overForm.bowlerId,
       target_wicketkeeper_season_roster_id: overForm.wicketkeeperId,
     });
+    if (result) setChangingBowler(false);
   }
 
   async function selectBatter() {
@@ -652,7 +654,35 @@ export function LiveMatchPage() {
           <div className="score-person-line">
             <span className="score-person-line__label">Bowler</span>
             <strong className="score-person-line__name">{currentOver.bowler_name}</strong>
+            {currentOver.deliveries.length === 0 && !changingBowler ? (
+              <ScoreButton
+                className="min-h-9 shrink-0 px-3 py-1.5 text-xs"
+                disabled={saving}
+                onClick={() => setChangingBowler(true)}
+              >
+                Change bowler
+              </ScoreButton>
+            ) : null}
           </div>
+
+          {currentOver.deliveries.length === 0 && changingBowler ? (
+            <div className="mt-4 rounded-xl border border-brand-200 bg-brand-50 p-3 dark:border-brand-900 dark:bg-brand-950/30">
+              <SelectField
+                label="New bowler"
+                onChange={(value) => setOverForm({ bowlerId: value, wicketkeeperId: value })}
+                options={availableBowlers.map((player) => ({ value: player.season_roster_id, label: player.player_name }))}
+                value={overForm.bowlerId}
+              />
+              <div className="mt-3 flex flex-wrap gap-2">
+                <ScoreButton disabled={saving || !overForm.bowlerId} onClick={() => void assignOver()} tone="accent">
+                  Save bowler
+                </ScoreButton>
+                <ScoreButton disabled={saving} onClick={() => setChangingBowler(false)}>
+                  Cancel
+                </ScoreButton>
+              </div>
+            </div>
+          ) : null}
 
           {activeBattingTurn ? (
             <div className="score-person-line mt-4">
