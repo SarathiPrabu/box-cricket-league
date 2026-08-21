@@ -46,7 +46,6 @@ export type FallOfWicket = {
 
 export type CommentaryItem = {
   id: string;
-  batterId: string;
   overNumber: number;
   ballLabel: string;
   badge: string;
@@ -342,21 +341,11 @@ function commentaryDescription(
   const prefix = `${bowlerName} to ${batterName}, `;
 
   if (delivery.is_wicket) {
+    const dismissedName = getPlayerName(state.lineups, delivery.dismissed_season_roster_id);
     const fielderName = delivery.fielder_season_roster_id
       ? getPlayerName(state.lineups, delivery.fielder_season_roster_id)
       : null;
-    const dismissal = delivery.dismissal_type === 'caught'
-      ? `caught by ${fielderName ?? 'fielder'}`
-      : delivery.dismissal_type === 'stumped'
-        ? `stumped by ${fielderName ?? 'wicketkeeper'}`
-        : delivery.dismissal_type === 'run_out'
-          ? `run out${fielderName ? ` by ${fielderName}` : ''}`
-          : delivery.dismissal_type === 'hit_wicket'
-            ? 'hit wicket'
-            : delivery.dismissal_type === 'hit_out_of_field'
-              ? 'hit out of the field'
-              : 'bowled';
-    return `${prefix}${dismissal}.`;
+    return `${prefix}OUT! ${dismissedName} ${dismissalDescription(delivery.dismissal_type, bowlerName, fielderName)}.`;
   }
   if (delivery.delivery_type === 'wide') {
     return `${prefix}${delivery.extra_runs} wide${delivery.extra_runs === 1 ? '' : 's'}.`;
@@ -393,7 +382,6 @@ export function getCommentary(
 
       return {
         id: delivery.id,
-        batterId: delivery.striker_season_roster_id,
         overNumber: context.overNumber,
         ballLabel: context.ballLabel,
         badge,
