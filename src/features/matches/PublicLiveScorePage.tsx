@@ -33,6 +33,7 @@ function getResultMessage(state: MatchScoringState) {
   if (state.match.status !== 'completed') return null;
   if (state.match.result_type === 'tie') return 'Match tied';
   if (state.match.result_type === 'no_result') return 'No result';
+  if (state.match.result_type === 'forfeit' && state.match.winner_season_team_id) return `${getTeamName(state, state.match.winner_season_team_id)} won by forfeit`;
   if (state.match.result_type === 'win' && state.match.winner_season_team_id) {
     const winnerTeamName = getTeamName(state, state.match.winner_season_team_id);
     const winnerInnings = state.innings.find(

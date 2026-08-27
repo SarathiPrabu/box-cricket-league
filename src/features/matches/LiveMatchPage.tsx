@@ -15,7 +15,7 @@ import type {
 } from './liveMatchTypes';
 
 const LEGAL_RUNS = [0, 1, 2, 4, 6] as const;
-const NO_BALL_BATTER_RUNS = [1, 2, 4, 6] as const;
+const NO_BALL_BATTER_RUNS = [0, 1, 2, 4, 6] as const;
 const DISMISSAL_OPTIONS: { value: DismissalType; label: string }[] = [
   { value: 'bowled', label: 'Bowled' },
   { value: 'caught', label: 'Caught' },
@@ -460,6 +460,19 @@ export function LiveMatchPage() {
     await runAction('mark_match_no_result', { target_match_id: matchId });
   }
 
+  async function recordForfeit(forfeitingTeamId: string) {
+    if (!matchId) return;
+    const forfeitingTeamName = forfeitingTeamId === state?.match.home_season_team_id ? state.match.home_team_name : state?.match.away_team_name;
+    if (!forfeitingTeamName || !window.confirm(`${forfeitingTeamName} cannot field the minimum five players. Record this match as a forfeit?`)) return;
+    const reason = window.prompt('Forfeit reason', `${forfeitingTeamName} could not field the minimum five players.`)?.trim();
+    if (!reason) return;
+    await runAction('record_match_forfeit', {
+      target_match_id: matchId,
+      forfeiting_season_team_id: forfeitingTeamId,
+      target_reason: reason,
+    });
+  }
+
   function beginEdit(delivery: ScoringDelivery) {
     setEditingDelivery({
       id: delivery.id,
@@ -634,6 +647,14 @@ export function LiveMatchPage() {
               </span>
             </span>
           </label>
+          <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-800">
+            <h4 className="text-sm font-bold text-slate-950 dark:text-white">Record forfeit instead</h4>
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">No lineup or first batting team is required. The selected team will be recorded as forfeiting.</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <ScoreButton disabled={saving} onClick={() => void recordForfeit(state.match.home_season_team_id)} tone="danger">{state.match.home_team_name} forfeits</ScoreButton>
+              <ScoreButton disabled={saving} onClick={() => void recordForfeit(state.match.away_season_team_id)} tone="danger">{state.match.away_team_name} forfeits</ScoreButton>
+            </div>
+          </div>
         </section>
       ) : null}
 
@@ -719,8 +740,8 @@ export function LiveMatchPage() {
 
           <div className="score-event-buttons mt-4">
             <ScoreButton className="score-event-button--no-ball" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('no_ball')}>NB</ScoreButton>
-            <ScoreButton className="score-event-button--neutral" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('wide')}>WD</ScoreButton>
-            <ScoreButton className="score-event-button--neutral" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => openScoringPrompt('dead_ball')}>DB</ScoreButton>
+            <ScoreButton className="score-event-button--neutral" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => void recordDelivery('wide', 0, 1)}>WD</ScoreButton>
+            <ScoreButton className="score-event-button--neutral" disabled={saving || inningsCanEnd || batterPromptOpen || currentOverComplete} onClick={() => void recordDelivery('dead_ball', 0, 1)}>DB</ScoreButton>
             <ScoreButton disabled={saving || inningsCanEnd || batterPromptOpen || !canRecordWicket || currentOverComplete} onClick={() => openScoringPrompt('wicket')} tone="danger">Wk</ScoreButton>
           </div>
 
@@ -788,6 +809,8 @@ export function LiveMatchPage() {
           <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">
             {state.match.result_type === 'no_result'
               ? 'No result — both teams receive one point.'
+              : state.match.result_type === 'forfeit'
+                ? `Winner by forfeit: ${state.match.winner_season_team_id === state.match.home_season_team_id ? state.match.home_team_name : state.match.away_team_name}`
               : state.match.result_type === 'tie'
                 ? 'Tie — both teams receive one point.'
                 : `Winner: ${state.match.winner_season_team_id === state.match.home_season_team_id ? state.match.home_team_name : state.match.away_team_name}`}

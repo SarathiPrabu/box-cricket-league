@@ -8,7 +8,7 @@ export type MatchCardData = {
   match_date: string | null;
   venue: string | null;
   status: 'draft' | 'scheduled' | 'live' | 'completed' | 'cancelled';
-  result_type?: 'win' | 'tie' | 'no_result' | null;
+  result_type?: 'win' | 'tie' | 'no_result' | 'forfeit' | null;
   winner_team_name?: string | null;
 };
 
@@ -71,7 +71,7 @@ function MatchCardContent({ match, canEdit, isEditing }: Pick<MatchCardProps, 'm
       </div>
       {match.status === 'completed' && match.result_type ? (
         <div className="border-t border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-800 dark:text-slate-200 sm:px-6">
-          {match.result_type === 'win' ? `Winner: ${match.winner_team_name ?? 'Team'}` : match.result_type === 'tie' ? 'Tie' : 'No result'}
+          {match.result_type === 'forfeit' ? `Winner by forfeit: ${match.winner_team_name ?? 'Team'}` : match.result_type === 'win' ? `Winner: ${match.winner_team_name ?? 'Team'}` : match.result_type === 'tie' ? 'Tie' : 'No result'}
         </div>
       ) : null}
     </>

@@ -1,6 +1,6 @@
 export type MatchStatus = 'draft' | 'scheduled' | 'live' | 'completed' | 'cancelled';
 
-export type MatchResultType = 'win' | 'tie' | 'no_result';
+export type MatchResultType = 'win' | 'tie' | 'no_result' | 'forfeit';
 
 export type DeliveryType = 'legal' | 'wide' | 'no_ball' | 'dead_ball';
 

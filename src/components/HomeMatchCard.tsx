@@ -42,6 +42,7 @@ function resultLabel(match: HomeMatchData) {
     const unit = match.win_margin.amount === 1 ? match.win_margin.type : `${match.win_margin.type}s`;
     return `${match.winner_team_name} won by ${match.win_margin.amount} ${unit}`;
   }
+  if (match.result_type === 'forfeit' && match.winner_team_name) return `${match.winner_team_name} won by forfeit`;
   if (match.result_type === 'tie') return 'Match tied';
   if (match.result_type === 'no_result') return 'No result';
   return 'Match completed';
