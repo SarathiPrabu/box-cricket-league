@@ -47,8 +47,8 @@
   .score-person-line__label { flex: 0 0 auto; color: var(--score-muted); font-size: 0.68rem; font-weight: 800; text-transform: uppercase; }
   .score-person-line__name { min-width: 0; color: #0f172a; font-size: 0.8rem; font-weight: 800; }
   .score-batter-line__balls { flex: 0 0 auto; color: var(--score-muted); font-size: 0.78rem; font-weight: 700; }
-  .score-over-balls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.75rem; }
-  .score-over-balls button { min-height: 3.1rem; padding: 0.4rem; border-radius: 50%; border-color: #cbd5e1; background: #ffffff !important; color: #0f172a !important; }
+  .score-over-balls { display: grid; grid-template-columns: repeat(5, 3.1rem); gap: 0.75rem; }
+  .score-over-balls button { width: 3.1rem; min-height: 3.1rem; padding: 0.4rem; border-radius: 0.35rem; border-color: #cbd5e1; background: #ffffff !important; color: #0f172a !important; }
   .score-over-balls button:hover { background: #f1f5f9 !important; }
   .score-over-balls .score-run-button--four { border-color: #16a34a !important; background: #16a34a !important; color: white !important; }
   .score-over-balls .score-run-button--six { border-color: #7e22ce !important; background: #7e22ce !important; color: white !important; }

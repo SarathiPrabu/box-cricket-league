@@ -4,7 +4,7 @@ function getDeliveryLabel(delivery: ScoringDelivery) {
   if (delivery.is_wicket) return 'W';
   if (delivery.delivery_type === 'wide') return 'Wd';
   if (delivery.delivery_type === 'no_ball') return 'NB';
-  if (delivery.delivery_type === 'dead_ball') return '•';
+  if (delivery.delivery_type === 'dead_ball') return 'Db';
   return delivery.batter_runs === 0 ? '•' : String(delivery.batter_runs);
 }
 
