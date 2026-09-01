@@ -19,7 +19,14 @@
   .score-match-header { padding: 0 0.1rem 0.35rem; }
   .score-match-header__top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .score-live-label { display: flex; align-items: center; gap: 0.55rem; color: var(--score-green); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.02em; }
-  .score-live-label span { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--score-red); }
+  .score-live-label span { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--score-red); animation: score-live-pulse 1.8s ease-in-out infinite; }
+  @keyframes score-live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.78); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .score-live-label span { animation: none; }
+  }
   .score-format { color: var(--score-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
   .score-board { overflow: hidden; border-radius: 1.5rem; background: var(--score-panel); }
   .score-board__scores { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; padding: 0.85rem 1rem; }

@@ -608,6 +608,7 @@ export function LiveMatchPage() {
       </div>
 
       <MatchHeading state={state} />
+      {state.match.status === 'live' ? <Link className="inline-flex text-xs font-bold text-brand-700 hover:underline dark:text-brand-300" to={`/matches/${state.match.id}/live/bulk`}>Open bulk entry</Link> : null}
       {error ? <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300" role="alert">{error}</p> : null}
 
       {isScheduled ? (
