@@ -89,7 +89,7 @@ function getWinMargin(
   if (winnerWickets === null) return null;
 
   const lineupSize = scoringState.lineups.filter((player) => player.season_team_id === winnerTeamId).length;
-  const amount = Math.max(lineupSize - 1 - winnerWickets, 0);
+  const amount = Math.max(lineupSize - winnerWickets, 0);
   return amount > 0 ? { amount, type: 'wicket' } : null;
 }
 

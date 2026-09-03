@@ -55,7 +55,7 @@ function getResultMessage(state: MatchScoringState) {
       const lineupSize = state.lineups.filter(
         (player) => player.season_team_id === state.match.winner_season_team_id,
       ).length;
-      const wicketMargin = Math.max(lineupSize - 1 - winnerTotals.wickets, 0);
+      const wicketMargin = Math.max(lineupSize - winnerTotals.wickets, 0);
       return wicketMargin > 0
         ? `${winnerTeamName} won by ${wicketMargin} wicket${wicketMargin === 1 ? '' : 's'}`
         : `${winnerTeamName} won`;
