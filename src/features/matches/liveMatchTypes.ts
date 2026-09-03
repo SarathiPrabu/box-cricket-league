@@ -4,7 +4,7 @@ export type MatchResultType = 'win' | 'tie' | 'no_result' | 'forfeit';
 
 export type DeliveryType = 'legal' | 'wide' | 'no_ball' | 'dead_ball';
 
-export type DismissalType = 'bowled' | 'caught' | 'stumped' | 'hit_wicket' | 'hit_out_of_field';
+export type DismissalType = 'bowled' | 'caught' | 'caught_and_bowled' | 'stumped' | 'hit_wicket' | 'hit_out_of_field';
 
 export type RecordedDismissalType = DismissalType | 'run_out';
 

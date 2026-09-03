@@ -19,6 +19,7 @@ const NO_BALL_BATTER_RUNS = [0, 1, 2, 4, 6] as const;
 const DISMISSAL_OPTIONS: { value: DismissalType; label: string }[] = [
   { value: 'bowled', label: 'Bowled' },
   { value: 'caught', label: 'Caught' },
+  { value: 'caught_and_bowled', label: 'Caught and Bowled' },
   { value: 'stumped', label: 'Stumped' },
   { value: 'hit_wicket', label: 'Hit Wicket' },
   { value: 'hit_out_of_field', label: 'Hit out of Field' },
@@ -398,6 +399,8 @@ export function LiveMatchPage() {
         ? appliedWicketkeeperId
         : wicket && appliedDismissalType === 'caught'
           ? fielderId || null
+          : wicket && appliedDismissalType === 'caught_and_bowled'
+            ? currentOver.bowler_season_roster_id
           : null,
     });
   }
@@ -503,6 +506,8 @@ export function LiveMatchPage() {
           ? overForm.wicketkeeperId
           : editingDelivery.dismissalType === 'caught'
             ? editingDelivery.fielderId || null
+            : editingDelivery.dismissalType === 'caught_and_bowled'
+              ? currentOver?.bowler_season_roster_id ?? null
             : null
         : null,
     });
@@ -890,6 +895,7 @@ export function LiveMatchPage() {
                 <div className="mt-4 grid gap-3">
                   <SelectField label="Dismissal" onChange={(value) => setDismissalType(value as DismissalType)} options={DISMISSAL_OPTIONS} value={dismissalType} />
                   {dismissalType === 'caught' ? <SelectField label="Fielder" onChange={setFielderId} options={currentBowlingPlayers.map((player) => ({ value: player.season_roster_id, label: player.player_name }))} value={fielderId} /> : null}
+                  {dismissalType === 'caught_and_bowled' ? <p className="rounded-lg bg-slate-100 p-3 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">Caught and bowled by the current bowler.</p> : null}
                   {dismissalType === 'stumped' ? <SelectField label="Wicketkeeper" onChange={setStumpingWicketkeeperId} options={keeperOptions.map((player) => ({ value: player.season_roster_id, label: player.player_name }))} value={stumpingWicketkeeperId} /> : null}
                 </div>
                 <ScoreButton className="mt-4 w-full" disabled={saving || (dismissalType === 'stumped' && !stumpingWicketkeeperId)} onClick={() => dismissalType === 'stumped' ? void recordStumping('legal') : (() => { setScoringPrompt(null); void recordDelivery('legal', 0, 0, true); })()} tone="danger">Record wicket</ScoreButton>

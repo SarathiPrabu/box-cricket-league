@@ -21,7 +21,7 @@ type StandingsRowData = {
 };
 
 function formatNrr(value: number) {
-  return value.toFixed(3);
+  return value.toFixed(2);
 }
 
 function teamAbbreviation(teamName: string) {

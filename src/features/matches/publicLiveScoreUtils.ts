@@ -132,6 +132,8 @@ function dismissalDescription(
       return `b ${bowlerName}`;
     case 'caught':
       return `c ${fielderName ?? 'fielder'} b ${bowlerName}`;
+    case 'caught_and_bowled':
+      return `c&b ${bowlerName}`;
     case 'stumped':
       return `st ${fielderName ?? 'wicketkeeper'} b ${bowlerName}`;
     case 'hit_wicket':
