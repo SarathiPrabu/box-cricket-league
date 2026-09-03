@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test:win-margin": "node scripts/test-win-margin.mjs",
     "seed:season1:generate": "node scripts/generate-season1-seed.mjs",
     "typecheck": "tsc -b"
   },
